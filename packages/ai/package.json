@@ -14,12 +14,13 @@
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "dev": "tsc --watch --project tsconfig.json",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@nexar/core": "workspace:*"
+    "@nexar/core": "workspace:*",
+    "@nexar/engine": "workspace:*"
   },
   "license": "Apache-2.0",
   "files": ["dist"]

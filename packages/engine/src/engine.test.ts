@@ -23,7 +23,7 @@ const testContext: IntentContext = {
 describe('NexarEngine', () => {
   it('composes a tree from a rule-based intent', async () => {
     const strategy = new RulesStrategy();
-    strategy.addRule('greet-user', (intent, context) => ({
+    strategy.addRule('greet-user', (_intent, context) => ({
       type: 'text',
       id: 'greeting',
       props: {
