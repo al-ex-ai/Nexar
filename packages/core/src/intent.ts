@@ -16,27 +16,27 @@ export interface Intent {
   readonly requires: readonly string[];
 
   /** Optional constraints on how the intent is rendered */
-  readonly constraints?: IntentConstraints;
+  readonly constraints?: IntentConstraints | undefined;
 
   /** Child intents for multi-step flows */
-  readonly steps?: readonly Intent[];
+  readonly steps?: readonly Intent[] | undefined;
 }
 
 export interface IntentConstraints {
   /** Maximum number of components in the composed UI */
-  readonly maxComponents?: number;
+  readonly maxComponents?: number | undefined;
 
   /** Required component types (e.g., ["input", "submit"]) */
-  readonly requiredTypes?: readonly string[];
+  readonly requiredTypes?: readonly string[] | undefined;
 
   /** Forbidden component types */
-  readonly forbiddenTypes?: readonly string[];
+  readonly forbiddenTypes?: readonly string[] | undefined;
 
   /** Layout preference */
-  readonly layout?: 'single-column' | 'two-column' | 'wizard' | 'auto';
+  readonly layout?: 'single-column' | 'two-column' | 'wizard' | 'auto' | undefined;
 
   /** Accessibility level */
-  readonly accessibilityLevel?: 'AA' | 'AAA';
+  readonly accessibilityLevel?: 'AA' | 'AAA' | undefined;
 }
 
 /**
@@ -47,23 +47,23 @@ export interface IntentContext {
   /** User information */
   readonly user?: {
     readonly id: string;
-    readonly role?: string;
-    readonly locale?: string;
-    readonly preferences?: Readonly<Record<string, unknown>>;
-  };
+    readonly role?: string | undefined;
+    readonly locale?: string | undefined;
+    readonly preferences?: Readonly<Record<string, unknown>> | undefined;
+  } | undefined;
 
   /** Device and platform */
   readonly platform: {
     readonly type: 'web' | 'mobile' | 'tablet' | 'tv' | 'terminal';
-    readonly os?: string;
-    readonly screenSize?: { readonly width: number; readonly height: number };
+    readonly os?: string | undefined;
+    readonly screenSize?: { readonly width: number; readonly height: number } | undefined;
   };
 
   /** Business-specific context passed to the AI engine */
-  readonly data?: Readonly<Record<string, unknown>>;
+  readonly data?: Readonly<Record<string, unknown>> | undefined;
 
   /** Active A/B test variants */
-  readonly experiments?: Readonly<Record<string, string>>;
+  readonly experiments?: Readonly<Record<string, string>> | undefined;
 }
 
 /**
@@ -82,12 +82,12 @@ export interface IntentResponse {
     readonly compositionTime: number;
 
     /** Model used for composition */
-    readonly model?: string;
+    readonly model?: string | undefined;
 
     /** Confidence score (0-1) */
     readonly confidence: number;
 
     /** Sources consulted (RAG) */
-    readonly sources?: readonly string[];
+    readonly sources?: readonly string[] | undefined;
   };
 }

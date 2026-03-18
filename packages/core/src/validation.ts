@@ -17,10 +17,10 @@ export interface ValidationResult {
   readonly valid: boolean;
 
   /** Errors (validation failed) */
-  readonly errors?: readonly ValidationError[];
+  readonly errors?: readonly ValidationError[] | undefined;
 
   /** Warnings (non-blocking) */
-  readonly warnings?: readonly ValidationWarning[];
+  readonly warnings?: readonly ValidationWarning[] | undefined;
 }
 
 export interface ValidationError {
@@ -31,7 +31,7 @@ export interface ValidationError {
   readonly message: string;
 
   /** Path to the invalid node (e.g., "root.children[2].props.label") */
-  readonly path?: string;
+  readonly path?: string | undefined;
 }
 
 export interface ValidationWarning {
@@ -42,5 +42,5 @@ export interface ValidationWarning {
   readonly message: string;
 
   /** Path to the node */
-  readonly path?: string;
+  readonly path?: string | undefined;
 }

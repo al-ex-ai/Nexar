@@ -13,7 +13,7 @@ export interface DesignToken {
   readonly category: TokenCategory;
 
   /** Human-readable description for AI context */
-  readonly description?: string;
+  readonly description?: string | undefined;
 }
 
 export type TokenCategory =

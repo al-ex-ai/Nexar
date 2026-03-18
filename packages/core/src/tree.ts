@@ -13,16 +13,16 @@ export interface NexarNode {
   readonly props: NodeProps;
 
   /** Child nodes */
-  readonly children?: readonly NexarNode[];
+  readonly children?: readonly NexarNode[] | undefined;
 
   /** Design tokens applied to this node */
-  readonly tokens?: Readonly<Record<string, string | number>>;
+  readonly tokens?: Readonly<Record<string, string | number>> | undefined;
 
   /** Conditional visibility expression */
-  readonly when?: string;
+  readonly when?: string | undefined;
 
   /** Event handlers bound to this node */
-  readonly on?: Readonly<Record<string, string>>;
+  readonly on?: Readonly<Record<string, string>> | undefined;
 }
 
 /** Props are a flat record of serializable values */
@@ -47,10 +47,10 @@ export interface NexarTree {
   readonly root: NexarNode;
 
   /** Global state bindings */
-  readonly state?: Readonly<Record<string, SerializableValue>>;
+  readonly state?: Readonly<Record<string, SerializableValue>> | undefined;
 
   /** Data sources required by this tree */
-  readonly dataSources?: readonly DataSource[];
+  readonly dataSources?: readonly DataSource[] | undefined;
 }
 
 export interface DataSource {

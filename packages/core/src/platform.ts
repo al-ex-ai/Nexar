@@ -22,11 +22,11 @@ export type PlatformCapability =
  * Platform traits define what a component supports per platform.
  */
 export interface PlatformTraits {
-  readonly web?: PlatformSupport;
-  readonly mobile?: PlatformSupport;
-  readonly tablet?: PlatformSupport;
-  readonly tv?: PlatformSupport;
-  readonly terminal?: PlatformSupport;
+  readonly web?: PlatformSupport | undefined;
+  readonly mobile?: PlatformSupport | undefined;
+  readonly tablet?: PlatformSupport | undefined;
+  readonly tv?: PlatformSupport | undefined;
+  readonly terminal?: PlatformSupport | undefined;
 }
 
 export interface PlatformSupport {
@@ -34,8 +34,8 @@ export interface PlatformSupport {
   readonly supported: boolean;
 
   /** Capabilities this component uses on this platform */
-  readonly capabilities?: readonly PlatformCapability[];
+  readonly capabilities?: readonly PlatformCapability[] | undefined;
 
   /** Platform-specific prop overrides */
-  readonly defaultProps?: Readonly<Record<string, unknown>>;
+  readonly defaultProps?: Readonly<Record<string, unknown>> | undefined;
 }

@@ -10,7 +10,7 @@ export interface NexarEvent {
   readonly nodeId: string;
 
   /** Event payload */
-  readonly payload?: Readonly<Record<string, unknown>>;
+  readonly payload?: Readonly<Record<string, unknown>> | undefined;
 
   /** Timestamp */
   readonly timestamp: number;

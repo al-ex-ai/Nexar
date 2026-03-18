@@ -25,10 +25,10 @@ export interface NexarComponent {
   readonly platforms: PlatformTraits;
 
   /** Constraints on where/how this component can be used */
-  readonly constraints?: ComponentConstraints;
+  readonly constraints?: ComponentConstraints | undefined;
 
   /** Validators that run on the component's output */
-  readonly validators?: readonly Validator[];
+  readonly validators?: readonly Validator[] | undefined;
 }
 
 export type ComponentCategory =
@@ -44,23 +44,23 @@ export type ComponentCategory =
 
 export interface ComponentConstraints {
   /** Components this can be nested inside */
-  readonly allowedParents?: readonly string[];
+  readonly allowedParents?: readonly string[] | undefined;
 
   /** Components that can be nested inside this */
-  readonly allowedChildren?: readonly string[];
+  readonly allowedChildren?: readonly string[] | undefined;
 
   /** Maximum instances per screen */
-  readonly maxInstances?: number;
+  readonly maxInstances?: number | undefined;
 
   /** Whether this component requires user interaction */
-  readonly interactive?: boolean;
+  readonly interactive?: boolean | undefined;
 
   /** Minimum accessibility requirements */
   readonly a11y?: {
     readonly requiresLabel: boolean;
-    readonly requiresRole?: string;
-    readonly minContrastRatio?: number;
-  };
+    readonly requiresRole?: string | undefined;
+    readonly minContrastRatio?: number | undefined;
+  } | undefined;
 }
 
 /**

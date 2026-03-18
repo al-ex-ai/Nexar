@@ -14,16 +14,16 @@ export interface NexarPlugin {
   readonly version: string;
 
   /** Custom components to register */
-  readonly components?: readonly NexarComponent[];
+  readonly components?: readonly NexarComponent[] | undefined;
 
   /** Custom intents to register */
-  readonly intents?: readonly Intent[];
+  readonly intents?: readonly Intent[] | undefined;
 
   /** Custom design tokens */
-  readonly tokens?: readonly DesignToken[];
+  readonly tokens?: readonly DesignToken[] | undefined;
 
   /** Custom validators */
-  readonly validators?: readonly Validator[];
+  readonly validators?: readonly Validator[] | undefined;
 
   /** Lifecycle hook: called when plugin is loaded */
   onLoad?(context: PluginContext): void | Promise<void>;
