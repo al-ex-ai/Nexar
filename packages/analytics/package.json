@@ -1,0 +1,26 @@
+{
+  "name": "@nexar/analytics",
+  "version": "0.1.0",
+  "description": "Built-in render and interaction tracking",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "dev": "tsc --watch --project tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@nexar/core": "workspace:*"
+  },
+  "license": "Apache-2.0",
+  "files": ["dist"]
+}
