@@ -1,10 +1,14 @@
-import { useState, useEffect, type ReactNode } from 'react';
-import type { Intent, IntentContext, NexarTree } from '@nexar/core';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
+import type { Intent, IntentContext, NexarTree, SerializableValue } from '@nexar/core';
+import type { NexarAction } from '@nexar/engine';
+import { ActionExecutor } from '@nexar/engine';
 import { NexarRenderer } from '@nexar/react';
+import { createStateStore } from '@nexar/state';
 import { componentMap } from './components.js';
 import { setupEngine, intents } from './setup.js';
 
 const engine = setupEngine();
+const stateStore = createStateStore();
 
 const context: IntentContext = {
   platform: { type: 'web' },
@@ -16,25 +20,61 @@ export function App(): ReactNode {
   const [tree, setTree] = useState<NexarTree | null>(null);
   const [compositionTime, setCompositionTime] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
+  const [stateSnapshot, setStateSnapshot] = useState<Readonly<Record<string, SerializableValue>>>({});
 
+  const executor = new ActionExecutor({
+    state: stateStore,
+    onNavigate: (intentId: string) => setActiveIntent(intentId),
+  });
+
+  // Subscribe to state changes
+  useEffect(() => {
+    const unsub = stateStore.subscribeAll(() => {
+      setStateSnapshot({ ...stateStore.snapshot() });
+    });
+    return unsub;
+  }, []);
+
+  // Compose tree when intent changes
   useEffect(() => {
     const intent = intents.find((i) => i.id === activeIntent);
     if (!intent) return;
 
+    // Reset state for new intent
+    stateStore.clear();
+    setStateSnapshot({});
     setError(null);
+
     engine
       .compose(intent as Intent, context)
       .then((result) => {
         setTree(result.response.tree);
         setCompositionTime(result.response.meta.compositionTime);
+
+        // Hydrate initial state from tree
+        if (result.response.tree.state) {
+          stateStore.hydrate(result.response.tree.state as Record<string, SerializableValue>);
+          setStateSnapshot({ ...stateStore.snapshot() });
+        }
       })
       .catch((err: unknown) => {
         setError(err instanceof Error ? err.message : 'Unknown error');
       });
   }, [activeIntent]);
 
+  const handleAction = useCallback((action: NexarAction) => {
+    executor.execute(action);
+  }, [executor]);
+
+  const handleStateChange = useCallback((key: string, value: SerializableValue) => {
+    stateStore.set(key, value);
+  }, []);
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex' }}>
+      {/* CSS for spinner animation */}
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+
       {/* Sidebar */}
       <div style={{
         width: '280px',
@@ -44,6 +84,7 @@ export function App(): ReactNode {
         display: 'flex',
         flexDirection: 'column',
         gap: '8px',
+        flexShrink: 0,
       }}>
         <div style={{ marginBottom: '24px' }}>
           <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#fff', margin: 0 }}>
@@ -81,6 +122,35 @@ export function App(): ReactNode {
           </button>
         ))}
 
+        {/* State inspector */}
+        {Object.keys(stateSnapshot).length > 0 && (
+          <div style={{ marginTop: '16px' }}>
+            <p style={{ fontSize: '11px', color: '#555', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
+              Live State
+            </p>
+            <div style={{
+              background: '#0a0a15',
+              border: '1px solid #1a1a2e',
+              borderRadius: '8px',
+              padding: '12px',
+              fontSize: '11px',
+              fontFamily: 'monospace',
+              color: '#6366f1',
+              maxHeight: '200px',
+              overflow: 'auto',
+            }}>
+              {Object.entries(stateSnapshot).map(([key, val]) => (
+                <div key={key} style={{ marginBottom: '4px' }}>
+                  <span style={{ color: '#888' }}>{key}:</span>{' '}
+                  <span style={{ color: val ? '#4ade80' : '#ff6b6b' }}>
+                    {val === null ? 'null' : val === '' ? '""' : String(val)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div style={{ marginTop: 'auto', padding: '16px 0', borderTop: '1px solid #1a1a2e' }}>
           <p style={{ fontSize: '11px', color: '#444' }}>
             {engine.registry.all().length} components registered
@@ -106,7 +176,6 @@ export function App(): ReactNode {
         justifyContent: 'flex-start',
         gap: '24px',
       }}>
-        {/* Intent info bar */}
         <div style={{
           width: '100%',
           maxWidth: '640px',
@@ -134,7 +203,6 @@ export function App(): ReactNode {
           </div>
         </div>
 
-        {/* Rendered tree */}
         <div style={{ width: '100%', maxWidth: '640px' }}>
           {error && (
             <div style={{ padding: '16px', background: '#2a0a0a', border: '1px solid #5a1a1a', borderRadius: '8px', color: '#ff6b6b' }}>
@@ -142,11 +210,16 @@ export function App(): ReactNode {
             </div>
           )}
           {tree && !error && (
-            <NexarRenderer tree={tree} components={componentMap} />
+            <NexarRenderer
+              tree={tree}
+              components={componentMap}
+              state={stateSnapshot}
+              onAction={handleAction}
+              onStateChange={handleStateChange}
+            />
           )}
         </div>
 
-        {/* Tree JSON viewer */}
         {tree && (
           <details style={{ width: '100%', maxWidth: '640px' }}>
             <summary style={{ fontSize: '12px', color: '#555', cursor: 'pointer', padding: '8px 0' }}>

@@ -103,6 +103,9 @@ importers:
       '@nexar/core':
         specifier: workspace:*
         version: link:../core
+      '@nexar/state':
+        specifier: workspace:*
+        version: link:../state
 
   packages/react:
     dependencies:

@@ -19,7 +19,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@nexar/core": "workspace:*"
+    "@nexar/core": "workspace:*",
+    "@nexar/state": "workspace:*"
   },
   "license": "Apache-2.0",
   "files": ["dist"]
