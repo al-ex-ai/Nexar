@@ -84,13 +84,20 @@ function parseValue(
 
 function compare(left: SerializableValue, op: string, right: SerializableValue): boolean {
   switch (op) {
-    case '==': return left === right;
-    case '!=': return left !== right;
-    case '>': return (left as number) > (right as number);
-    case '<': return (left as number) < (right as number);
-    case '>=': return (left as number) >= (right as number);
-    case '<=': return (left as number) <= (right as number);
-    default: return false;
+    case '==':
+      return left === right;
+    case '!=':
+      return left !== right;
+    case '>':
+      return (left as number) > (right as number);
+    case '<':
+      return (left as number) < (right as number);
+    case '>=':
+      return (left as number) >= (right as number);
+    case '<=':
+      return (left as number) <= (right as number);
+    default:
+      return false;
   }
 }
 

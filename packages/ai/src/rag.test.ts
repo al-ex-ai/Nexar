@@ -1,6 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import type {
+  EmbeddingResult,
+  GenerateOptions,
+  GenerationResult,
+  ModelAdapter,
+} from './model-adapter.js';
 import { createRAG } from './rag.js';
-import type { ModelAdapter, EmbeddingResult, GenerationResult, GenerateOptions } from './model-adapter.js';
 
 /** Simple mock adapter that creates deterministic embeddings from text hash */
 function createMockAdapter(): ModelAdapter {
@@ -13,7 +18,10 @@ function createMockAdapter(): ModelAdapter {
       return { vector, dimensions: 64 };
     },
 
-    async generate(prompt: string, _options?: GenerateOptions | undefined): Promise<GenerationResult> {
+    async generate(
+      prompt: string,
+      _options?: GenerateOptions | undefined,
+    ): Promise<GenerationResult> {
       return { text: `Answer based on: ${prompt.slice(0, 50)}...` };
     },
   };
@@ -25,7 +33,7 @@ function textToVector(text: string, dims: number): number[] {
   for (let i = 0; i < dims; i++) {
     let hash = 0;
     for (let j = 0; j < text.length; j++) {
-      hash = ((hash << 5) - hash + (text.charCodeAt(j) * (i + 1))) | 0;
+      hash = ((hash << 5) - hash + text.charCodeAt(j) * (i + 1)) | 0;
     }
     vector.push(Math.sin(hash) * 0.1);
   }
@@ -40,9 +48,24 @@ describe('RAG Engine', () => {
       minScore: -1,
     });
 
-    await rag.addChunk({ id: '1', source: 'docs', title: 'React Guide', content: 'React is a UI library for building components' });
-    await rag.addChunk({ id: '2', source: 'docs', title: 'Database Guide', content: 'PostgreSQL is a relational database system' });
-    await rag.addChunk({ id: '3', source: 'docs', title: 'Node Guide', content: 'Node.js is a JavaScript runtime for servers' });
+    await rag.addChunk({
+      id: '1',
+      source: 'docs',
+      title: 'React Guide',
+      content: 'React is a UI library for building components',
+    });
+    await rag.addChunk({
+      id: '2',
+      source: 'docs',
+      title: 'Database Guide',
+      content: 'PostgreSQL is a relational database system',
+    });
+    await rag.addChunk({
+      id: '3',
+      source: 'docs',
+      title: 'Node Guide',
+      content: 'Node.js is a JavaScript runtime for servers',
+    });
 
     expect(rag.chunks()).toHaveLength(3);
 
@@ -73,7 +96,12 @@ describe('RAG Engine', () => {
       minScore: -1,
     });
 
-    await rag.addChunk({ id: '1', source: 'docs', title: 'API Docs', content: 'The API supports REST and GraphQL' });
+    await rag.addChunk({
+      id: '1',
+      source: 'docs',
+      title: 'API Docs',
+      content: 'The API supports REST and GraphQL',
+    });
 
     const result = await rag.query('How does the API work?');
     expect(result.answer).toBeDefined();
@@ -86,7 +114,12 @@ describe('RAG Engine', () => {
       minScore: 0.99, // Very high threshold
     });
 
-    await rag.addChunk({ id: '1', source: 'docs', title: 'Unrelated', content: 'Something completely different' });
+    await rag.addChunk({
+      id: '1',
+      source: 'docs',
+      title: 'Unrelated',
+      content: 'Something completely different',
+    });
 
     const result = await rag.query('quantum physics');
     expect(result.answer).toBe('No relevant information found.');

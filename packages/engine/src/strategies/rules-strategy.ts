@@ -1,10 +1,7 @@
 import type { Intent, IntentContext, NexarNode, NexarTree } from '@nexar/core';
 import type { CompositionParams, CompositionStrategy } from '../strategy.js';
 
-type IntentRule = (
-  intent: Intent,
-  context: IntentContext,
-) => NexarNode | undefined;
+type IntentRule = (intent: Intent, context: IntentContext) => NexarNode | undefined;
 
 /**
  * Deterministic composition: maps intents to trees via registered rules.
@@ -24,16 +21,12 @@ export class RulesStrategy implements CompositionStrategy {
     const rule = this.rules.get(intent.id);
 
     if (!rule) {
-      throw new NexarCompositionError(
-        `No rule registered for intent "${intent.id}"`,
-      );
+      throw new NexarCompositionError(`No rule registered for intent "${intent.id}"`);
     }
 
     const root = rule(intent, context);
     if (!root) {
-      throw new NexarCompositionError(
-        `Rule for intent "${intent.id}" returned no result`,
-      );
+      throw new NexarCompositionError(`Rule for intent "${intent.id}" returned no result`);
     }
 
     validateComponentTypes(root, registry);
@@ -46,14 +39,9 @@ export class RulesStrategy implements CompositionStrategy {
 }
 
 /** Ensure every node in the tree uses a registered component type */
-function validateComponentTypes(
-  node: NexarNode,
-  registry: { has(type: string): boolean },
-): void {
+function validateComponentTypes(node: NexarNode, registry: { has(type: string): boolean }): void {
   if (!registry.has(node.type)) {
-    throw new NexarCompositionError(
-      `Component type "${node.type}" is not registered`,
-    );
+    throw new NexarCompositionError(`Component type "${node.type}" is not registered`);
   }
   if (node.children) {
     for (const child of node.children) {

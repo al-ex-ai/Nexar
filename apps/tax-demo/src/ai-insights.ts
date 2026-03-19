@@ -37,7 +37,8 @@ export function generateInsights(
       id: 'simple-filer',
       type: 'tip',
       headline: 'Simple filing detected',
-      detail: 'Based on your profile, you qualify for the streamlined 3-step workflow. Most filers like you complete in under 10 minutes.',
+      detail:
+        'Based on your profile, you qualify for the streamlined 3-step workflow. Most filers like you complete in under 10 minutes.',
       step: 'filing-status',
     });
   }
@@ -47,7 +48,40 @@ export function generateInsights(
       id: 'advanced-filer',
       type: 'tip',
       headline: 'Comprehensive filing',
-      detail: 'Your income sources require additional forms. We\'ve added investment, deduction, and multi-state sections to your workflow.',
+      detail:
+        "Your income sources require additional forms. We've added investment, deduction, and multi-state sections to your workflow.",
+      step: 'filing-status',
+    });
+  }
+
+  // Workflow composition insight (always show)
+  const stepCount = profile.filerType === 'simple' ? 3 : profile.multiState ? 6 : 5;
+  insights.push({
+    id: 'composition',
+    type: 'tip',
+    headline: `${stepCount}-step workflow composed`,
+    detail: `Nexar composed a ${stepCount}-step workflow from 1 intent based on your profile. No pre-built flow file was used. The same 13 components serve all user types.`,
+    step: 'filing-status',
+  });
+
+  if (profile.hasDependents) {
+    insights.push({
+      id: 'dependents-detected',
+      type: 'tip',
+      headline: 'Dependent fields added',
+      detail:
+        'Your profile indicates dependents. The filing status step now includes a dependent count field and child tax credit calculation.',
+      step: 'filing-status',
+    });
+  }
+
+  if (profile.multiState) {
+    insights.push({
+      id: 'multi-state-detected',
+      type: 'tip',
+      headline: 'Multi-state filing detected',
+      detail:
+        'A multi-state income allocation step has been added to your workflow. Income will be split across primary and secondary states.',
       step: 'filing-status',
     });
   }
@@ -79,7 +113,8 @@ export function generateInsights(
       id: 'crypto-warning',
       type: 'warning',
       headline: 'Crypto reporting required',
-      detail: 'All cryptocurrency transactions must be reported. Ensure you have records of cost basis for accurate capital gains calculation.',
+      detail:
+        'All cryptocurrency transactions must be reported. Ensure you have records of cost basis for accurate capital gains calculation.',
       step: 'investments',
     });
   }
@@ -126,7 +161,8 @@ export function generateInsights(
         id: 'refund',
         type: 'savings',
         headline: `Estimated refund: ${formatCurrency(taxResult.refund)}`,
-        detail: 'Based on your withholding and calculated tax. File early to receive your refund sooner. Direct deposit typically arrives in 10-14 days.',
+        detail:
+          'Based on your withholding and calculated tax. File early to receive your refund sooner. Direct deposit typically arrives in 10-14 days.',
         step: 'summary',
       });
     } else if (taxResult.owes) {
@@ -134,7 +170,8 @@ export function generateInsights(
         id: 'owed',
         type: 'warning',
         headline: `Amount owed: ${formatCurrency(Math.abs(taxResult.refund))}`,
-        detail: 'Your withholding was less than your tax liability. Consider adjusting your W-4 withholding for next year.',
+        detail:
+          'Your withholding was less than your tax liability. Consider adjusting your W-4 withholding for next year.',
         step: 'summary',
       });
     }
@@ -148,10 +185,12 @@ export function generateInsights(
  * In production, this would call an ML model or LLM.
  */
 export function classifyFiler(userData: Partial<UserProfile>): UserProfile {
-  const hasInvestments = userData.incomeTypes?.some((t) => t === '1099' || t === 'investments') ?? false;
+  const hasInvestments =
+    userData.incomeTypes?.some((t) => t === '1099' || t === 'investments') ?? false;
 
   return {
-    filerType: hasInvestments || userData.hasDeductions || userData.multiState ? 'advanced' : 'simple',
+    filerType:
+      hasInvestments || userData.hasDeductions || userData.multiState ? 'advanced' : 'simple',
     incomeTypes: userData.incomeTypes ?? ['w2'],
     hasDeductions: userData.hasDeductions ?? false,
     multiState: userData.multiState ?? false,

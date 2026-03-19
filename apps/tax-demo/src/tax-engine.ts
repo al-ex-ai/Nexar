@@ -4,7 +4,7 @@
  */
 
 const BRACKETS_2025 = [
-  { min: 0, max: 11600, rate: 0.10 },
+  { min: 0, max: 11600, rate: 0.1 },
   { min: 11600, max: 47150, rate: 0.12 },
   { min: 47150, max: 100525, rate: 0.22 },
   { min: 100525, max: 191950, rate: 0.24 },
@@ -49,7 +49,10 @@ export function computeTax(input: TaxInput): TaxResult {
   const grossIncome = input.wages + input.investmentIncome + input.cryptoIncome;
 
   const saltCapped = Math.min(input.saltPaid, SALT_CAP);
-  const itemizedDeduction = input.mortgageInterest + saltCapped + input.charitableGiving +
+  const itemizedDeduction =
+    input.mortgageInterest +
+    saltCapped +
+    input.charitableGiving +
     Math.max(0, input.medicalExpenses - grossIncome * 0.075);
 
   const totalDeductions = input.useItemized
@@ -59,7 +62,7 @@ export function computeTax(input: TaxInput): TaxResult {
   const taxableIncome = Math.max(0, grossIncome - totalDeductions);
 
   let federalTax = 0;
-  let marginalRate = 0.10;
+  let marginalRate = 0.1;
   for (const bracket of BRACKETS_2025) {
     if (taxableIncome > bracket.min) {
       const taxable = Math.min(taxableIncome, bracket.max) - bracket.min;
@@ -90,7 +93,11 @@ export function computeTax(input: TaxInput): TaxResult {
 }
 
 export function formatCurrency(n: number): string {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(n);
 }
 
 export function formatPercent(n: number): string {

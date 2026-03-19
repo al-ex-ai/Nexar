@@ -1,5 +1,7 @@
 # Tax Demo — Dynamic Workflow Engine
 
+**Live demo: [nexar.al-ex.ai](https://nexar.al-ex.ai)**
+
 This demo implements a **Dynamic Tax Workflow Engine** using Nexar's intent-driven architecture. It demonstrates how a single intent can produce different workflows for different taxpayers without maintaining separate flow files.
 
 ## The Problem

@@ -33,10 +33,12 @@ export interface GenerationResult {
   readonly text: string;
 
   /** Token usage */
-  readonly usage?: {
-    readonly promptTokens: number;
-    readonly completionTokens: number;
-  } | undefined;
+  readonly usage?:
+    | {
+        readonly promptTokens: number;
+        readonly completionTokens: number;
+      }
+    | undefined;
 }
 
 export interface ModelAdapter {
@@ -99,14 +101,17 @@ function createGeminiAdapter(config: ModelConfig): ModelAdapter {
         throw new NexarAIError(`Gemini embedding failed: ${res.status} ${await res.text()}`);
       }
 
-      const data = await res.json() as { embedding: { values: number[] } };
+      const data = (await res.json()) as { embedding: { values: number[] } };
       return {
         vector: data.embedding.values,
         dimensions: data.embedding.values.length,
       };
     },
 
-    async generate(prompt: string, options?: GenerateOptions | undefined): Promise<GenerationResult> {
+    async generate(
+      prompt: string,
+      options?: GenerateOptions | undefined,
+    ): Promise<GenerationResult> {
       const url = `${baseUrl}/models/${config.model}:generateContent?key=${config.apiKey}`;
       const body: Record<string, unknown> = {
         contents: [{ parts: [{ text: prompt }] }],
@@ -117,7 +122,7 @@ function createGeminiAdapter(config: ModelConfig): ModelAdapter {
       };
 
       if (options?.systemPrompt) {
-        body['systemInstruction'] = { parts: [{ text: options.systemPrompt }] };
+        body.systemInstruction = { parts: [{ text: options.systemPrompt }] };
       }
 
       const res = await fetch(url, {
@@ -130,7 +135,7 @@ function createGeminiAdapter(config: ModelConfig): ModelAdapter {
         throw new NexarAIError(`Gemini generation failed: ${res.status} ${await res.text()}`);
       }
 
-      const data = await res.json() as {
+      const data = (await res.json()) as {
         candidates: { content: { parts: { text: string }[] } }[];
         usageMetadata?: { promptTokenCount: number; candidatesTokenCount: number };
       };
@@ -138,10 +143,12 @@ function createGeminiAdapter(config: ModelConfig): ModelAdapter {
       const text = data.candidates[0]?.content.parts[0]?.text ?? '';
       return {
         text,
-        usage: data.usageMetadata ? {
-          promptTokens: data.usageMetadata.promptTokenCount,
-          completionTokens: data.usageMetadata.candidatesTokenCount,
-        } : undefined,
+        usage: data.usageMetadata
+          ? {
+              promptTokens: data.usageMetadata.promptTokenCount,
+              completionTokens: data.usageMetadata.candidatesTokenCount,
+            }
+          : undefined,
       };
     },
   };
@@ -160,7 +167,7 @@ function createOpenAIAdapter(config: ModelConfig): ModelAdapter {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${config.apiKey}`,
+          Authorization: `Bearer ${config.apiKey}`,
         },
         body: JSON.stringify({ model: embeddingModel, input: text }),
       });
@@ -169,12 +176,15 @@ function createOpenAIAdapter(config: ModelConfig): ModelAdapter {
         throw new NexarAIError(`OpenAI embedding failed: ${res.status} ${await res.text()}`);
       }
 
-      const data = await res.json() as { data: { embedding: number[] }[] };
+      const data = (await res.json()) as { data: { embedding: number[] }[] };
       const vector = data.data[0]?.embedding ?? [];
       return { vector, dimensions: vector.length };
     },
 
-    async generate(prompt: string, options?: GenerateOptions | undefined): Promise<GenerationResult> {
+    async generate(
+      prompt: string,
+      options?: GenerateOptions | undefined,
+    ): Promise<GenerationResult> {
       const messages: { role: string; content: string }[] = [];
       if (options?.systemPrompt) {
         messages.push({ role: 'system', content: options.systemPrompt });
@@ -185,7 +195,7 @@ function createOpenAIAdapter(config: ModelConfig): ModelAdapter {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${config.apiKey}`,
+          Authorization: `Bearer ${config.apiKey}`,
         },
         body: JSON.stringify({
           model: config.model,
@@ -199,17 +209,19 @@ function createOpenAIAdapter(config: ModelConfig): ModelAdapter {
         throw new NexarAIError(`OpenAI generation failed: ${res.status} ${await res.text()}`);
       }
 
-      const data = await res.json() as {
+      const data = (await res.json()) as {
         choices: { message: { content: string } }[];
         usage?: { prompt_tokens: number; completion_tokens: number };
       };
 
       return {
         text: data.choices[0]?.message.content ?? '',
-        usage: data.usage ? {
-          promptTokens: data.usage.prompt_tokens,
-          completionTokens: data.usage.completion_tokens,
-        } : undefined,
+        usage: data.usage
+          ? {
+              promptTokens: data.usage.prompt_tokens,
+              completionTokens: data.usage.completion_tokens,
+            }
+          : undefined,
       };
     },
   };
@@ -223,10 +235,15 @@ function createAnthropicAdapter(config: ModelConfig): ModelAdapter {
     model: config.model,
 
     async embed(_text: string): Promise<EmbeddingResult> {
-      throw new NexarAIError('Anthropic does not provide an embedding API. Use a separate embedding provider.');
+      throw new NexarAIError(
+        'Anthropic does not provide an embedding API. Use a separate embedding provider.',
+      );
     },
 
-    async generate(prompt: string, options?: GenerateOptions | undefined): Promise<GenerationResult> {
+    async generate(
+      prompt: string,
+      options?: GenerateOptions | undefined,
+    ): Promise<GenerationResult> {
       const res = await fetch(`${baseUrl}/messages`, {
         method: 'POST',
         headers: {
@@ -246,17 +263,19 @@ function createAnthropicAdapter(config: ModelConfig): ModelAdapter {
         throw new NexarAIError(`Anthropic generation failed: ${res.status} ${await res.text()}`);
       }
 
-      const data = await res.json() as {
+      const data = (await res.json()) as {
         content: { text: string }[];
         usage?: { input_tokens: number; output_tokens: number };
       };
 
       return {
         text: data.content[0]?.text ?? '',
-        usage: data.usage ? {
-          promptTokens: data.usage.input_tokens,
-          completionTokens: data.usage.output_tokens,
-        } : undefined,
+        usage: data.usage
+          ? {
+              promptTokens: data.usage.input_tokens,
+              completionTokens: data.usage.output_tokens,
+            }
+          : undefined,
       };
     },
   };
@@ -281,12 +300,15 @@ function createOllamaAdapter(config: ModelConfig): ModelAdapter {
         throw new NexarAIError(`Ollama embedding failed: ${res.status} ${await res.text()}`);
       }
 
-      const data = await res.json() as { embeddings: number[][] };
+      const data = (await res.json()) as { embeddings: number[][] };
       const vector = data.embeddings[0] ?? [];
       return { vector, dimensions: vector.length };
     },
 
-    async generate(prompt: string, options?: GenerateOptions | undefined): Promise<GenerationResult> {
+    async generate(
+      prompt: string,
+      options?: GenerateOptions | undefined,
+    ): Promise<GenerationResult> {
       const res = await fetch(`${baseUrl}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -308,7 +330,7 @@ function createOllamaAdapter(config: ModelConfig): ModelAdapter {
         throw new NexarAIError(`Ollama generation failed: ${res.status} ${await res.text()}`);
       }
 
-      const data = await res.json() as {
+      const data = (await res.json()) as {
         message: { content: string };
         prompt_eval_count?: number;
         eval_count?: number;
@@ -316,10 +338,13 @@ function createOllamaAdapter(config: ModelConfig): ModelAdapter {
 
       return {
         text: data.message.content,
-        usage: (data.prompt_eval_count !== undefined && data.eval_count !== undefined) ? {
-          promptTokens: data.prompt_eval_count,
-          completionTokens: data.eval_count,
-        } : undefined,
+        usage:
+          data.prompt_eval_count !== undefined && data.eval_count !== undefined
+            ? {
+                promptTokens: data.prompt_eval_count,
+                completionTokens: data.eval_count,
+              }
+            : undefined,
       };
     },
   };

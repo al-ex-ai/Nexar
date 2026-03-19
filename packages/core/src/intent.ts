@@ -45,12 +45,14 @@ export interface IntentConstraints {
  */
 export interface IntentContext {
   /** User information */
-  readonly user?: {
-    readonly id: string;
-    readonly role?: string | undefined;
-    readonly locale?: string | undefined;
-    readonly preferences?: Readonly<Record<string, unknown>> | undefined;
-  } | undefined;
+  readonly user?:
+    | {
+        readonly id: string;
+        readonly role?: string | undefined;
+        readonly locale?: string | undefined;
+        readonly preferences?: Readonly<Record<string, unknown>> | undefined;
+      }
+    | undefined;
 
   /** Device and platform */
   readonly platform: {

@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
 import type { Intent, IntentContext, NexarTree } from '@nexar/core';
+import { useCallback, useState } from 'react';
 import { useNexar } from './provider.js';
 
 export interface UseIntentResult {

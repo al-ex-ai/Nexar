@@ -1,8 +1,4 @@
-import type {
-  ComponentCategory,
-  ComponentRegistry,
-  NexarComponent,
-} from '@nexar/core';
+import type { ComponentCategory, ComponentRegistry, NexarComponent } from '@nexar/core';
 
 /**
  * In-memory component registry.
@@ -14,9 +10,7 @@ export function createComponentRegistry(): ComponentRegistry {
   return {
     register(component: NexarComponent): void {
       if (components.has(component.type)) {
-        throw new NexarRegistryError(
-          `Component "${component.type}" is already registered`,
-        );
+        throw new NexarRegistryError(`Component "${component.type}" is already registered`);
       }
       components.set(component.type, component);
     },

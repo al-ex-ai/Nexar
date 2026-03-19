@@ -1,36 +1,114 @@
-import { useState, useEffect, useCallback, type ReactNode } from 'react';
-import type { Intent, IntentContext, NexarTree, NexarNode, SerializableValue } from '@nexar/core';
+import type { Intent, IntentContext, NexarNode, NexarTree, SerializableValue } from '@nexar/core';
 import type { NexarAction } from '@nexar/engine';
 import { NexarRenderer } from '@nexar/react';
 import { createStateStore } from '@nexar/state';
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { classifyFiler, generateInsights, type UserProfile } from './ai-insights.js';
 import { componentMap } from './components.js';
 import { setupEngine } from './setup.js';
-import { classifyFiler, generateInsights, type UserProfile } from './ai-insights.js';
 import { computeTax, formatCurrency, formatPercent, type TaxInput } from './tax-engine.js';
 
 const engine = setupEngine();
 const stateStore = createStateStore();
 
-const PROFILES: { label: string; description: string; profile: Partial<UserProfile> }[] = [
+const PRIMARY = '#355EBE';
+
+const PROFILES: {
+  label: string;
+  description: string;
+  profile: Partial<UserProfile>;
+  prefill: Record<string, SerializableValue>;
+}[] = [
   {
     label: 'Simple Filer',
     description: 'W-2 employee, single, no dependents',
-    profile: { incomeTypes: ['w2'], hasDeductions: false, multiState: false, hasDependents: false, hasCrypto: false },
+    profile: {
+      incomeTypes: ['w2'],
+      hasDeductions: false,
+      multiState: false,
+      hasDependents: false,
+      hasCrypto: false,
+    },
+    prefill: {
+      'taxpayer.filingStatus': 'single',
+      'income.employer': 'Intuit Inc.',
+      'income.wages': '95000',
+      'income.fedWithheld': '18000',
+    },
   },
   {
     label: 'Family Filer',
     description: 'W-2 employee, married, 2 dependents',
-    profile: { incomeTypes: ['w2'], hasDeductions: false, multiState: false, hasDependents: true, hasCrypto: false },
+    profile: {
+      incomeTypes: ['w2'],
+      hasDeductions: false,
+      multiState: false,
+      hasDependents: true,
+      hasCrypto: false,
+    },
+    prefill: {
+      'taxpayer.filingStatus': 'married-joint',
+      'taxpayer.dependentCount': '2',
+      'income.employer': 'Google LLC',
+      'income.wages': '145000',
+      'income.fedWithheld': '28000',
+    },
   },
   {
     label: 'Advanced Filer',
     description: 'W-2 + investments, itemized deductions, multi-state',
-    profile: { incomeTypes: ['w2', 'investments'], hasDeductions: true, multiState: true, hasDependents: true, hasCrypto: false },
+    profile: {
+      incomeTypes: ['w2', 'investments'],
+      hasDeductions: true,
+      multiState: true,
+      hasDependents: true,
+      hasCrypto: false,
+    },
+    prefill: {
+      'taxpayer.filingStatus': 'married-joint',
+      'taxpayer.dependentCount': '2',
+      'income.employer': 'Amazon.com',
+      'income.wages': '185000',
+      'income.fedWithheld': '38000',
+      'income.stateWithheld': '9200',
+      'investments.dividends': '3200',
+      'investments.interest': '1800',
+      'investments.capitalGains': '12500',
+      'deductions.useItemized': true,
+      'deductions.mortgage': '18000',
+      'deductions.salt': '14500',
+      'deductions.charitable': '5000',
+      'deductions.medical': '2000',
+      'states.primary': 'California',
+      'states.primaryPercent': '70',
+      'states.secondary': 'Washington',
+      'states.secondaryPercent': '30',
+    },
   },
   {
     label: 'Crypto Trader',
     description: 'W-2 + investments + crypto, itemized',
-    profile: { incomeTypes: ['w2', 'investments'], hasDeductions: true, multiState: false, hasDependents: false, hasCrypto: true },
+    profile: {
+      incomeTypes: ['w2', 'investments'],
+      hasDeductions: true,
+      multiState: false,
+      hasDependents: false,
+      hasCrypto: true,
+    },
+    prefill: {
+      'taxpayer.filingStatus': 'single',
+      'income.employer': 'Coinbase Global',
+      'income.wages': '120000',
+      'income.fedWithheld': '24000',
+      'investments.dividends': '500',
+      'investments.interest': '200',
+      'investments.capitalGains': '8500',
+      'investments.crypto': '22000',
+      'deductions.useItemized': true,
+      'deductions.mortgage': '15000',
+      'deductions.salt': '11000',
+      'deductions.charitable': '3000',
+    },
   },
 ];
 
@@ -38,13 +116,18 @@ export function App(): ReactNode {
   const [selectedProfile, setSelectedProfile] = useState<number>(0);
   const [tree, setTree] = useState<NexarTree | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
-  const [stateSnapshot, setStateSnapshot] = useState<Readonly<Record<string, SerializableValue>>>({});
+  const [stateSnapshot, setStateSnapshot] = useState<Readonly<Record<string, SerializableValue>>>(
+    {},
+  );
   const [compositionTime, setCompositionTime] = useState(0);
+  const [showTree, setShowTree] = useState(false);
 
-  const userProfile = classifyFiler(PROFILES[selectedProfile]?.profile ?? {});
+  const userProfile = useMemo(
+    () => classifyFiler(PROFILES[selectedProfile]?.profile ?? {}),
+    [selectedProfile],
+  );
   const totalSteps = tree?.root.children?.length ?? 1;
 
-  // Subscribe to state changes
   useEffect(() => {
     const unsub = stateStore.subscribeAll(() => {
       setStateSnapshot({ ...stateStore.snapshot() });
@@ -52,7 +135,6 @@ export function App(): ReactNode {
     return unsub;
   }, []);
 
-  // Compose tree when profile changes
   useEffect(() => {
     stateStore.clear();
     setCurrentStep(0);
@@ -74,95 +156,104 @@ export function App(): ReactNode {
       setTree(result.response.tree);
       setCompositionTime(result.response.meta.compositionTime);
       stateStore.set('wizard.step', 0);
+
+      const prefill = PROFILES[selectedProfile]?.prefill;
+      if (prefill) {
+        for (const [key, value] of Object.entries(prefill)) {
+          stateStore.set(key, value);
+        }
+      }
     });
-  }, [selectedProfile]);
+  }, [selectedProfile, userProfile]);
 
-  // Compute tax whenever state changes
-  const taxInput: TaxInput = {
-    wages: Number(String(stateSnapshot['income.wages'] ?? '0').replace(/,/g, '')) || 0,
-    fedWithheld: Number(String(stateSnapshot['income.fedWithheld'] ?? '0').replace(/,/g, '')) || 0,
-    stateWithheld: Number(String(stateSnapshot['income.stateWithheld'] ?? '0').replace(/,/g, '')) || 0,
-    investmentIncome:
-      (Number(String(stateSnapshot['investments.dividends'] ?? '0').replace(/,/g, '')) || 0) +
-      (Number(String(stateSnapshot['investments.interest'] ?? '0').replace(/,/g, '')) || 0) +
-      (Number(String(stateSnapshot['investments.capitalGains'] ?? '0').replace(/,/g, '')) || 0),
-    cryptoIncome: Number(String(stateSnapshot['investments.crypto'] ?? '0').replace(/,/g, '')) || 0,
-    mortgageInterest: Number(String(stateSnapshot['deductions.mortgage'] ?? '0').replace(/,/g, '')) || 0,
-    saltPaid: Number(String(stateSnapshot['deductions.salt'] ?? '0').replace(/,/g, '')) || 0,
-    charitableGiving: Number(String(stateSnapshot['deductions.charitable'] ?? '0').replace(/,/g, '')) || 0,
-    medicalExpenses: Number(String(stateSnapshot['deductions.medical'] ?? '0').replace(/,/g, '')) || 0,
-    useItemized: stateSnapshot['deductions.useItemized'] === true,
-    dependentCount: Number(stateSnapshot['taxpayer.dependentCount'] ?? '0') || 0,
-  };
-
+  const taxInput = buildTaxInput(stateSnapshot);
   const taxResult = taxInput.wages > 0 ? computeTax(taxInput) : null;
 
-  // Update summary state for the tree
-  useEffect(() => {
-    if (taxResult) {
-      stateStore.set('summary.grossIncome', formatCurrency(taxResult.grossIncome));
-      stateStore.set('summary.deductions', formatCurrency(taxResult.totalDeductions));
-      stateStore.set('summary.taxableIncome', formatCurrency(taxResult.taxableIncome));
-      stateStore.set('summary.federalTax', formatCurrency(taxResult.federalTax));
-      stateStore.set('summary.withheld', formatCurrency(taxInput.fedWithheld));
-      stateStore.set('summary.credits', formatCurrency(taxResult.dependentCredit));
-      stateStore.set('summary.refund', formatCurrency(Math.abs(taxResult.refund)));
-      stateStore.set('summary.rateInfo', `Effective rate: ${formatPercent(taxResult.effectiveRate)} | Marginal bracket: ${formatPercent(taxResult.marginalRate)}`);
-    }
-  }, [taxResult?.grossIncome, taxResult?.federalTax, taxResult?.refund]);
+  // Compute summary values inline (not via state store to avoid infinite loop)
+  const summaryState = useMemo(() => {
+    if (!taxResult) return {};
+    return {
+      'summary.grossIncome': formatCurrency(taxResult.grossIncome),
+      'summary.deductions': formatCurrency(taxResult.totalDeductions),
+      'summary.taxableIncome': formatCurrency(taxResult.taxableIncome),
+      'summary.federalTax': formatCurrency(taxResult.federalTax),
+      'summary.withheld': formatCurrency(taxInput.fedWithheld),
+      'summary.credits': formatCurrency(taxResult.dependentCredit),
+      'summary.refund': formatCurrency(Math.abs(taxResult.refund)),
+      'summary.rateInfo': `Effective rate: ${formatPercent(taxResult.effectiveRate)} | Marginal bracket: ${formatPercent(taxResult.marginalRate)}`,
+    };
+  }, [taxResult, taxInput.fedWithheld]);
 
-  // Generate AI insights
-  const insights = generateInsights(userProfile, stateSnapshot as Record<string, unknown>, taxResult);
+  // Merge state snapshot with computed summary for rendering
+  const renderState = useMemo(
+    () => ({ ...stateSnapshot, ...summaryState }),
+    [stateSnapshot, summaryState],
+  );
+
+  const insights = generateInsights(
+    userProfile,
+    stateSnapshot as Record<string, unknown>,
+    taxResult,
+  );
   const stepName = getStepName(currentStep, userProfile);
-  const activeInsights = insights.filter((i) => i.step === stepName || i.step === 'summary');
+  const activeInsights = insights.filter(
+    (i) => i.step === stepName || i.step === 'summary' || i.step === 'filing-status',
+  );
 
-  // Build the visible tree (only current step)
-  const visibleTree = tree ? buildVisibleTree(tree, currentStep, stateSnapshot) : null;
+  const visibleTree = tree ? buildVisibleTree(tree, currentStep) : null;
 
-  const handleAction = useCallback((action: NexarAction) => {
-    if (action.type === 'setState' && action.key === '_action') {
-      if (action.value === 'next' && currentStep < totalSteps - 1) {
-        setCurrentStep((s) => s + 1);
-        stateStore.set('wizard.step', currentStep + 1);
-      } else if (action.value === 'prev' && currentStep > 0) {
-        setCurrentStep((s) => s - 1);
-        stateStore.set('wizard.step', currentStep - 1);
+  const handleAction = useCallback(
+    (action: NexarAction) => {
+      if (action.type === 'setState' && action.key === '_action') {
+        if (action.value === 'next' && currentStep < totalSteps - 1) {
+          setCurrentStep((s) => s + 1);
+          stateStore.set('wizard.step', currentStep + 1);
+        } else if (action.value === 'prev' && currentStep > 0) {
+          setCurrentStep((s) => s - 1);
+          stateStore.set('wizard.step', currentStep - 1);
+        }
       }
-    }
-  }, [currentStep, totalSteps]);
+    },
+    [currentStep, totalSteps],
+  );
 
   const handleStateChange = useCallback((key: string, value: SerializableValue) => {
     stateStore.set(key, value);
   }, []);
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex' }}>
-      {/* Sidebar */}
-      <div style={{
-        width: '300px',
-        background: '#0d0d1a',
-        borderRight: '1px solid #1a1a2e',
-        padding: '24px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px',
-        flexShrink: 0,
-        overflowY: 'auto',
-      }}>
+    <div style={{ minHeight: '100vh', display: 'flex', background: '#0f1117' }}>
+      {/* Left Sidebar */}
+      <div
+        style={{
+          width: '300px',
+          background: '#0a0c14',
+          borderRight: '1px solid #1e2030',
+          padding: '24px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+          flexShrink: 0,
+          overflowY: 'auto',
+        }}
+      >
         <div>
           <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#fff', margin: 0 }}>
-            <span style={{ color: '#6366f1' }}>{'>'}</span> Nexar Tax Demo
+            <span style={{ color: PRIMARY }}>N</span>exar
+            <span
+              style={{ fontSize: '12px', color: '#6b7280', marginLeft: '8px', fontWeight: 400 }}
+            >
+              Tax Demo
+            </span>
           </h1>
-          <p style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+          <p style={{ fontSize: '11px', color: '#4b5563', marginTop: '4px' }}>
             Intent-Driven Dynamic Workflows
           </p>
         </div>
 
         {/* Profile selector */}
         <div>
-          <p style={{ fontSize: '11px', color: '#555', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
-            User Profile
-          </p>
+          <SectionLabel text="Taxpayer Profile" />
           {PROFILES.map((p, i) => (
             <button
               key={p.label}
@@ -173,48 +264,42 @@ export function App(): ReactNode {
                 width: '100%',
                 padding: '10px 14px',
                 marginBottom: '6px',
-                background: selectedProfile === i ? '#1a1a3a' : 'transparent',
-                border: selectedProfile === i ? '1px solid #2a2a5a' : '1px solid transparent',
+                background: selectedProfile === i ? `${PRIMARY}15` : 'transparent',
+                border: selectedProfile === i ? `1px solid ${PRIMARY}44` : '1px solid transparent',
                 borderRadius: '8px',
-                color: selectedProfile === i ? '#8b8bff' : '#888',
+                color: selectedProfile === i ? PRIMARY : '#9ca3af',
                 fontSize: '13px',
                 textAlign: 'left',
                 cursor: 'pointer',
               }}
             >
               <div style={{ fontWeight: 600 }}>{p.label}</div>
-              <div style={{ fontSize: '11px', color: '#555', marginTop: '2px' }}>{p.description}</div>
+              <div style={{ fontSize: '11px', color: '#4b5563', marginTop: '2px' }}>
+                {p.description}
+              </div>
             </button>
           ))}
         </div>
 
         {/* Architecture info */}
-        <div style={{
-          background: '#0a0a15',
-          border: '1px solid #1a1a2e',
-          borderRadius: '8px',
-          padding: '12px',
-          fontSize: '11px',
-        }}>
-          <p style={{ color: '#6366f1', fontWeight: 600, marginBottom: '8px' }}>How Nexar Works</p>
-          <p style={{ color: '#555', marginBottom: '4px' }}>
-            <span style={{ color: '#888' }}>Intent:</span> file-tax-return (always the same)
-          </p>
-          <p style={{ color: '#555', marginBottom: '4px' }}>
-            <span style={{ color: '#888' }}>Profile:</span> {userProfile.filerType} filer
-          </p>
-          <p style={{ color: '#555', marginBottom: '4px' }}>
-            <span style={{ color: '#888' }}>Steps:</span> {totalSteps} (composed from context)
-          </p>
-          <p style={{ color: '#555', marginBottom: '4px' }}>
-            <span style={{ color: '#888' }}>Components:</span> {engine.registry.all().length} registered
-          </p>
-          <p style={{ color: '#555' }}>
-            <span style={{ color: '#888' }}>Composed:</span> {compositionTime}ms
-          </p>
-          <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #1a1a2e' }}>
-            <p style={{ color: '#4ade80', fontSize: '10px' }}>
-              0 flow files. 1 intent. {PROFILES.length} user types. Context drives the tree.
+        <div
+          style={{
+            background: '#111320',
+            border: '1px solid #1e2030',
+            borderRadius: '8px',
+            padding: '12px',
+            fontSize: '11px',
+          }}
+        >
+          <p style={{ color: PRIMARY, fontWeight: 600, marginBottom: '8px' }}>Composition Engine</p>
+          <InfoRow label="Intent" value="file-tax-return" />
+          <InfoRow label="Profile" value={`${userProfile.filerType} filer`} />
+          <InfoRow label="Steps" value={`${totalSteps} (composed from context)`} />
+          <InfoRow label="Components" value={`${engine.registry.all().length} registered`} />
+          <InfoRow label="Composed in" value={`${compositionTime}ms`} />
+          <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #1e2030' }}>
+            <p style={{ color: '#34d399', fontSize: '10px' }}>
+              0 flow files. 1 intent. {PROFILES.length} profiles. Context drives composition.
             </p>
           </div>
         </div>
@@ -222,27 +307,10 @@ export function App(): ReactNode {
         {/* AI Insights */}
         {activeInsights.length > 0 && (
           <div>
-            <p style={{ fontSize: '11px', color: '#555', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
-              AI Insights ({activeInsights.length})
-            </p>
+            <SectionLabel text={`AI Insights (${activeInsights.length})`} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {activeInsights.map((insight) => (
-                <div key={insight.id} style={{
-                  padding: '10px 12px',
-                  background: insight.type === 'tip' ? '#0a1a2a' : insight.type === 'savings' ? '#0a2a1a' : '#2a2000',
-                  border: `1px solid ${insight.type === 'tip' ? '#1a3a5a' : insight.type === 'savings' ? '#1a5a3a' : '#5a4a00'}`,
-                  borderRadius: '8px',
-                }}>
-                  <div style={{
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: insight.type === 'tip' ? '#60a5fa' : insight.type === 'savings' ? '#4ade80' : '#fbbf24',
-                    marginBottom: '4px',
-                  }}>
-                    {insight.type === 'tip' ? '💡' : insight.type === 'savings' ? '💰' : '⚠️'} {insight.headline}
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#888', lineHeight: '1.4' }}>{insight.detail}</div>
-                </div>
+                <InsightCard key={insight.id} insight={insight} />
               ))}
             </div>
           </div>
@@ -250,56 +318,89 @@ export function App(): ReactNode {
       </div>
 
       {/* Main content */}
-      <div style={{
-        flex: 1,
-        padding: '48px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '24px',
-      }}>
+      <div
+        style={{
+          flex: 1,
+          padding: '48px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '24px',
+        }}
+      >
         <div style={{ width: '100%', maxWidth: '680px' }}>
           {visibleTree && (
             <NexarRenderer
               tree={visibleTree}
               components={componentMap}
-              state={stateSnapshot as Record<string, SerializableValue>}
+              state={renderState as Record<string, SerializableValue>}
               onAction={handleAction}
               onStateChange={handleStateChange}
             />
           )}
 
           {/* Navigation */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginTop: '24px',
+            }}
+          >
             <button
               type="button"
-              onClick={() => { setCurrentStep((s) => s - 1); stateStore.set('wizard.step', currentStep - 1); }}
+              onClick={() => {
+                setCurrentStep((s) => s - 1);
+                stateStore.set('wizard.step', currentStep - 1);
+              }}
               disabled={currentStep === 0}
               style={{
                 padding: '12px 24px',
-                background: currentStep === 0 ? '#222' : 'transparent',
-                border: `1px solid ${currentStep === 0 ? '#333' : '#2a2a4a'}`,
+                background: currentStep === 0 ? '#1a1d28' : 'transparent',
+                border: `1px solid ${currentStep === 0 ? '#2a2d3a' : '#2a2d3a'}`,
                 borderRadius: '8px',
-                color: currentStep === 0 ? '#555' : '#ccc',
+                color: currentStep === 0 ? '#4b5563' : '#9ca3af',
                 fontSize: '14px',
                 cursor: currentStep === 0 ? 'not-allowed' : 'pointer',
               }}
             >
               Previous
             </button>
-            <span style={{ fontSize: '14px', color: '#555', alignSelf: 'center' }}>
-              Step {currentStep + 1} of {totalSteps}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <span style={{ fontSize: '13px', color: '#6b7280' }}>
+                Step {currentStep + 1} of {totalSteps}
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowTree(!showTree)}
+                style={{
+                  padding: '6px 12px',
+                  background: showTree ? `${PRIMARY}22` : 'transparent',
+                  border: `1px solid ${showTree ? PRIMARY : '#2a2d3a'}`,
+                  borderRadius: '6px',
+                  color: showTree ? PRIMARY : '#6b7280',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  fontFamily: 'monospace',
+                }}
+              >
+                {'{ }'} Tree
+              </button>
+            </div>
             <button
               type="button"
-              onClick={() => { setCurrentStep((s) => s + 1); stateStore.set('wizard.step', currentStep + 1); }}
+              onClick={() => {
+                setCurrentStep((s) => s + 1);
+                stateStore.set('wizard.step', currentStep + 1);
+              }}
               disabled={currentStep >= totalSteps - 1}
               style={{
                 padding: '12px 24px',
-                background: currentStep >= totalSteps - 1 ? '#333' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                background: currentStep >= totalSteps - 1 ? '#1a1d28' : PRIMARY,
                 border: 'none',
                 borderRadius: '8px',
-                color: currentStep >= totalSteps - 1 ? '#666' : '#fff',
+                color: currentStep >= totalSteps - 1 ? '#4b5563' : '#fff',
                 fontSize: '14px',
                 fontWeight: 600,
                 cursor: currentStep >= totalSteps - 1 ? 'not-allowed' : 'pointer',
@@ -309,34 +410,132 @@ export function App(): ReactNode {
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Tree JSON viewer */}
-        {tree && (
-          <details style={{ width: '100%', maxWidth: '680px' }}>
-            <summary style={{ fontSize: '12px', color: '#555', cursor: 'pointer', padding: '8px 0' }}>
-              View composed NexarTree ({totalSteps} steps, {countNodes(tree.root)} nodes)
-            </summary>
-            <pre style={{
-              background: '#0d0d1a',
-              border: '1px solid #1a1a2e',
+      {/* Right Drawer - NexarTree viewer */}
+      {showTree && tree && (
+        <div
+          style={{
+            width: '380px',
+            background: '#0a0c14',
+            borderLeft: '1px solid #1e2030',
+            padding: '24px',
+            flexShrink: 0,
+            overflowY: 'auto',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '16px',
+            }}
+          >
+            <div>
+              <p style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>NexarTree</p>
+              <p style={{ fontSize: '11px', color: '#4b5563' }}>
+                {totalSteps} steps, {countNodes(tree.root)} nodes
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowTree(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#6b7280',
+                cursor: 'pointer',
+                fontSize: '18px',
+              }}
+            >
+              x
+            </button>
+          </div>
+          <pre
+            style={{
+              background: '#111320',
+              border: '1px solid #1e2030',
               borderRadius: '8px',
               padding: '16px',
-              fontSize: '11px',
-              color: '#888',
+              fontSize: '10px',
+              fontFamily: 'monospace',
+              color: '#9ca3af',
               overflow: 'auto',
-              maxHeight: '400px',
-            }}>
-              {JSON.stringify(tree, null, 2)}
-            </pre>
-          </details>
-        )}
-      </div>
+              maxHeight: 'calc(100vh - 120px)',
+              lineHeight: '1.5',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+            }}
+          >
+            {JSON.stringify(tree, null, 2)}
+          </pre>
+        </div>
+      )}
     </div>
   );
 }
 
-/** Build a tree showing only the current step */
-function buildVisibleTree(tree: NexarTree, step: number, _state: Readonly<Record<string, SerializableValue>>): NexarTree {
+// --- Helper Components ---
+
+function SectionLabel({ text }: { readonly text: string }): ReactNode {
+  return (
+    <p
+      style={{
+        fontSize: '11px',
+        color: '#4b5563',
+        textTransform: 'uppercase',
+        letterSpacing: '1px',
+        marginBottom: '8px',
+      }}
+    >
+      {text}
+    </p>
+  );
+}
+
+function InfoRow({ label, value }: { readonly label: string; readonly value: string }): ReactNode {
+  return (
+    <p style={{ color: '#4b5563', marginBottom: '4px' }}>
+      <span style={{ color: '#9ca3af' }}>{label}:</span> {value}
+    </p>
+  );
+}
+
+function InsightCard({
+  insight,
+}: {
+  readonly insight: { readonly type: string; readonly headline: string; readonly detail: string };
+}): ReactNode {
+  const colorMap: Record<string, { bg: string; border: string; text: string; icon: string }> = {
+    tip: { bg: '#111827', border: '#1e3a5f', text: '#60a5fa', icon: '>' },
+    savings: { bg: '#0a2a1a', border: '#1a5a3a', text: '#34d399', icon: '$' },
+    warning: { bg: '#2a2000', border: '#5a4a00', text: '#fbbf24', icon: '!' },
+  };
+  const c = colorMap[insight.type] ??
+    colorMap.tip ?? { bg: '#111827', border: '#1e3a5f', text: '#60a5fa', icon: '>' };
+
+  return (
+    <div
+      style={{
+        padding: '10px 12px',
+        background: c.bg,
+        border: `1px solid ${c.border}`,
+        borderRadius: '8px',
+      }}
+    >
+      <div style={{ fontSize: '12px', fontWeight: 600, color: c.text, marginBottom: '4px' }}>
+        <span style={{ fontFamily: 'monospace', marginRight: '6px' }}>[{c.icon}]</span>
+        {insight.headline}
+      </div>
+      <div style={{ fontSize: '11px', color: '#6b7280', lineHeight: '1.4' }}>{insight.detail}</div>
+    </div>
+  );
+}
+
+// --- Helper Functions ---
+
+function buildVisibleTree(tree: NexarTree, step: number): NexarTree {
   const currentStepNode = tree.root.children?.[step];
   if (!currentStepNode) return tree;
 
@@ -369,4 +568,27 @@ function getStepName(step: number, profile: UserProfile): string {
   if (profile.multiState) steps.push('states');
   steps.push('summary');
   return steps[step] ?? 'summary';
+}
+
+function parseNum(val: SerializableValue | undefined): number {
+  return Number(String(val ?? '0').replace(/,/g, '')) || 0;
+}
+
+function buildTaxInput(state: Readonly<Record<string, SerializableValue>>): TaxInput {
+  return {
+    wages: parseNum(state['income.wages']),
+    fedWithheld: parseNum(state['income.fedWithheld']),
+    stateWithheld: parseNum(state['income.stateWithheld']),
+    investmentIncome:
+      parseNum(state['investments.dividends']) +
+      parseNum(state['investments.interest']) +
+      parseNum(state['investments.capitalGains']),
+    cryptoIncome: parseNum(state['investments.crypto']),
+    mortgageInterest: parseNum(state['deductions.mortgage']),
+    saltPaid: parseNum(state['deductions.salt']),
+    charitableGiving: parseNum(state['deductions.charitable']),
+    medicalExpenses: parseNum(state['deductions.medical']),
+    useItemized: state['deductions.useItemized'] === true,
+    dependentCount: Number(state['taxpayer.dependentCount'] ?? '0') || 0,
+  };
 }

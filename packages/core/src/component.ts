@@ -56,11 +56,13 @@ export interface ComponentConstraints {
   readonly interactive?: boolean | undefined;
 
   /** Minimum accessibility requirements */
-  readonly a11y?: {
-    readonly requiresLabel: boolean;
-    readonly requiresRole?: string | undefined;
-    readonly minContrastRatio?: number | undefined;
-  } | undefined;
+  readonly a11y?:
+    | {
+        readonly requiresLabel: boolean;
+        readonly requiresRole?: string | undefined;
+        readonly minContrastRatio?: number | undefined;
+      }
+    | undefined;
 }
 
 /**

@@ -2,8 +2,8 @@ import type {
   ComponentRegistry,
   NexarNode,
   NexarTree,
-  ValidationResult,
   ValidationError,
+  ValidationResult,
   ValidationWarning,
 } from '@nexar/core';
 
@@ -11,10 +11,7 @@ import type {
  * Validates a composed tree against the component registry and design system.
  * Catches issues before the tree reaches the renderer.
  */
-export function validateTree(
-  tree: NexarTree,
-  registry: ComponentRegistry,
-): ValidationResult {
+export function validateTree(tree: NexarTree, registry: ComponentRegistry): ValidationResult {
   const errors: ValidationError[] = [];
   const warnings: ValidationWarning[] = [];
 
@@ -76,7 +73,11 @@ function validateNode(
     });
   }
 
-  if (component.constraints?.a11y?.requiresLabel && !node.props['label'] && !node.props['aria-label']) {
+  if (
+    component.constraints?.a11y?.requiresLabel &&
+    !node.props.label &&
+    !node.props['aria-label']
+  ) {
     errors.push({
       code: 'MISSING_A11Y_LABEL',
       message: `Component "${node.type}" requires a label for accessibility`,

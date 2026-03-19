@@ -1,13 +1,11 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
     "useIgnoreFile": true
   },
-  "organizeImports": {
-    "enabled": true
-  },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -22,8 +20,11 @@
       "complexity": {
         "noExcessiveCognitiveComplexity": {
           "level": "warn",
-          "options": { "maxAllowedComplexity": 15 }
+          "options": { "maxAllowedComplexity": 30 }
         }
+      },
+      "a11y": {
+        "noLabelWithoutControl": "warn"
       },
       "correctness": {
         "noUnusedImports": "error",
@@ -31,7 +32,7 @@
         "useExhaustiveDependencies": "warn"
       },
       "performance": {
-        "noBarrelFile": "error",
+        "noBarrelFile": "off",
         "noReExportAll": "error"
       },
       "style": {
@@ -56,6 +57,6 @@
     }
   },
   "files": {
-    "ignore": ["node_modules", "dist", "coverage", ".turbo", "*.json"]
+    "includes": ["packages/*/src/**", "apps/*/src/**"]
   }
 }

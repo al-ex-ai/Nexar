@@ -1,11 +1,14 @@
-import { describe, it, expect } from 'vitest';
 import type { Intent, IntentContext, NexarComponent } from '@nexar/core';
+import { describe, expect, it } from 'vitest';
 import { createEngine } from './engine.js';
 import { RulesStrategy } from './strategies/rules-strategy.js';
 
 const webPlatform = { web: { supported: true } } as const;
 
-function makeComponent(type: string, category: NexarComponent['category'] = 'display'): NexarComponent {
+function makeComponent(
+  type: string,
+  category: NexarComponent['category'] = 'display',
+): NexarComponent {
   return {
     type,
     label: type,
@@ -47,7 +50,7 @@ describe('NexarEngine', () => {
     expect(result.response.intentId).toBe('greet-user');
     expect(result.response.tree.version).toBe('1.0');
     expect(result.response.tree.root.type).toBe('text');
-    expect(result.response.tree.root.props['content']).toBe('Hello!');
+    expect(result.response.tree.root.props.content).toBe('Hello!');
     expect(result.response.meta.confidence).toBe(1.0);
     expect(result.validation?.valid).toBe(true);
   });
@@ -73,13 +76,13 @@ describe('NexarEngine', () => {
     };
 
     const guestResult = await engine.compose(intent, testContext);
-    expect(guestResult.response.tree.root.props['content']).toBe('Welcome, guest');
+    expect(guestResult.response.tree.root.props.content).toBe('Welcome, guest');
 
     const userResult = await engine.compose(intent, {
       ...testContext,
       user: { id: 'alex' },
     });
-    expect(userResult.response.tree.root.props['content']).toBe('Welcome back, alex');
+    expect(userResult.response.tree.root.props.content).toBe('Welcome back, alex');
   });
 
   it('rejects trees with unregistered components', async () => {

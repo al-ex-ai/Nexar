@@ -1,6 +1,6 @@
 import type { SerializableValue } from '@nexar/core';
 import type { StateStore } from '@nexar/state';
-import type { NexarAction, ApiCallAction, ValidateAction } from './action.js';
+import type { ApiCallAction, NexarAction, ValidateAction } from './action.js';
 import { resolveExpression } from './expression.js';
 
 export interface ActionExecutorConfig {
@@ -79,7 +79,7 @@ export class ActionExecutor {
         throw new Error(`API error: ${res.status}`);
       }
 
-      const data = await res.json() as SerializableValue;
+      const data = (await res.json()) as SerializableValue;
 
       if (action.resultKey) {
         this.state.set(action.resultKey, data);

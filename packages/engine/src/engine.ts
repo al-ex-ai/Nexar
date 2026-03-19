@@ -9,9 +9,9 @@ import type {
   NexarTree,
   ValidationResult,
 } from '@nexar/core';
-import type { CompositionStrategy } from './strategy.js';
-import { createComponentRegistry } from './registry.js';
 import { createEventBus } from './event-bus.js';
+import { createComponentRegistry } from './registry.js';
+import type { CompositionStrategy } from './strategy.js';
 import { validateTree } from './validate-tree.js';
 
 export interface EngineConfig {

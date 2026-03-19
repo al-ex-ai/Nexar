@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { Intent, IntentContext, NexarTree, SerializableValue } from '@nexar/core';
 import type { NexarAction } from '@nexar/engine';
 import { ActionExecutor } from '@nexar/engine';
 import { NexarRenderer } from '@nexar/react';
 import { createStateStore } from '@nexar/state';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
 import { componentMap } from './components.js';
-import { setupEngine, intents } from './setup.js';
+import { intents, setupEngine } from './setup.js';
 
 const engine = setupEngine();
 const stateStore = createStateStore();
@@ -20,7 +20,9 @@ export function App(): ReactNode {
   const [tree, setTree] = useState<NexarTree | null>(null);
   const [compositionTime, setCompositionTime] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
-  const [stateSnapshot, setStateSnapshot] = useState<Readonly<Record<string, SerializableValue>>>({});
+  const [stateSnapshot, setStateSnapshot] = useState<Readonly<Record<string, SerializableValue>>>(
+    {},
+  );
 
   const executor = new ActionExecutor({
     state: stateStore,
@@ -62,9 +64,12 @@ export function App(): ReactNode {
       });
   }, [activeIntent]);
 
-  const handleAction = useCallback((action: NexarAction) => {
-    executor.execute(action);
-  }, [executor]);
+  const handleAction = useCallback(
+    (action: NexarAction) => {
+      executor.execute(action);
+    },
+    [executor],
+  );
 
   const handleStateChange = useCallback((key: string, value: SerializableValue) => {
     stateStore.set(key, value);
@@ -76,16 +81,18 @@ export function App(): ReactNode {
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
 
       {/* Sidebar */}
-      <div style={{
-        width: '280px',
-        background: '#0d0d1a',
-        borderRight: '1px solid #1a1a2e',
-        padding: '24px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
-        flexShrink: 0,
-      }}>
+      <div
+        style={{
+          width: '280px',
+          background: '#0d0d1a',
+          borderRight: '1px solid #1a1a2e',
+          padding: '24px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          flexShrink: 0,
+        }}
+      >
         <div style={{ marginBottom: '24px' }}>
           <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#fff', margin: 0 }}>
             <span style={{ color: '#6366f1' }}>{'>'}</span> Nexar
@@ -95,7 +102,15 @@ export function App(): ReactNode {
           </p>
         </div>
 
-        <p style={{ fontSize: '11px', color: '#555', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
+        <p
+          style={{
+            fontSize: '11px',
+            color: '#555',
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+            marginBottom: '8px',
+          }}
+        >
           Intents
         </p>
 
@@ -118,27 +133,39 @@ export function App(): ReactNode {
             }}
           >
             <div style={{ fontWeight: 600 }}>{intent.label}</div>
-            <div style={{ fontSize: '11px', color: '#555', marginTop: '2px' }}>{intent.description}</div>
+            <div style={{ fontSize: '11px', color: '#555', marginTop: '2px' }}>
+              {intent.description}
+            </div>
           </button>
         ))}
 
         {/* State inspector */}
         {Object.keys(stateSnapshot).length > 0 && (
           <div style={{ marginTop: '16px' }}>
-            <p style={{ fontSize: '11px', color: '#555', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
+            <p
+              style={{
+                fontSize: '11px',
+                color: '#555',
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                marginBottom: '8px',
+              }}
+            >
               Live State
             </p>
-            <div style={{
-              background: '#0a0a15',
-              border: '1px solid #1a1a2e',
-              borderRadius: '8px',
-              padding: '12px',
-              fontSize: '11px',
-              fontFamily: 'monospace',
-              color: '#6366f1',
-              maxHeight: '200px',
-              overflow: 'auto',
-            }}>
+            <div
+              style={{
+                background: '#0a0a15',
+                border: '1px solid #1a1a2e',
+                borderRadius: '8px',
+                padding: '12px',
+                fontSize: '11px',
+                fontFamily: 'monospace',
+                color: '#6366f1',
+                maxHeight: '200px',
+                overflow: 'auto',
+              }}
+            >
               {Object.entries(stateSnapshot).map(([key, val]) => (
                 <div key={key} style={{ marginBottom: '4px' }}>
                   <span style={{ color: '#888' }}>{key}:</span>{' '}
@@ -155,57 +182,74 @@ export function App(): ReactNode {
           <p style={{ fontSize: '11px', color: '#444' }}>
             {engine.registry.all().length} components registered
           </p>
-          <p style={{ fontSize: '11px', color: '#444' }}>
-            {intents.length} intents defined
-          </p>
+          <p style={{ fontSize: '11px', color: '#444' }}>{intents.length} intents defined</p>
           {compositionTime > 0 && (
-            <p style={{ fontSize: '11px', color: '#6366f1' }}>
-              Composed in {compositionTime}ms
-            </p>
+            <p style={{ fontSize: '11px', color: '#6366f1' }}>Composed in {compositionTime}ms</p>
           )}
         </div>
       </div>
 
       {/* Main content */}
-      <div style={{
-        flex: 1,
-        padding: '48px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        gap: '24px',
-      }}>
-        <div style={{
-          width: '100%',
-          maxWidth: '640px',
+      <div
+        style={{
+          flex: 1,
+          padding: '48px',
           display: 'flex',
-          justifyContent: 'space-between',
+          flexDirection: 'column',
           alignItems: 'center',
-        }}>
+          justifyContent: 'flex-start',
+          gap: '24px',
+        }}
+      >
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '640px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
           <div>
-            <span style={{ fontSize: '11px', color: '#555', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            <span
+              style={{
+                fontSize: '11px',
+                color: '#555',
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+              }}
+            >
               Active Intent
             </span>
             <h2 style={{ fontSize: '16px', color: '#fff', margin: '2px 0 0' }}>
               {intents.find((i) => i.id === activeIntent)?.label}
             </h2>
           </div>
-          <div style={{
-            padding: '4px 12px',
-            background: '#1a1a2e',
-            borderRadius: '6px',
-            fontSize: '12px',
-            fontFamily: 'monospace',
-            color: '#6366f1',
-          }}>
+          <div
+            style={{
+              padding: '4px 12px',
+              background: '#1a1a2e',
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontFamily: 'monospace',
+              color: '#6366f1',
+            }}
+          >
             id: &quot;{activeIntent}&quot;
           </div>
         </div>
 
         <div style={{ width: '100%', maxWidth: '640px' }}>
           {error && (
-            <div style={{ padding: '16px', background: '#2a0a0a', border: '1px solid #5a1a1a', borderRadius: '8px', color: '#ff6b6b' }}>
+            <div
+              style={{
+                padding: '16px',
+                background: '#2a0a0a',
+                border: '1px solid #5a1a1a',
+                borderRadius: '8px',
+                color: '#ff6b6b',
+              }}
+            >
               {error}
             </div>
           )}
@@ -222,19 +266,23 @@ export function App(): ReactNode {
 
         {tree && (
           <details style={{ width: '100%', maxWidth: '640px' }}>
-            <summary style={{ fontSize: '12px', color: '#555', cursor: 'pointer', padding: '8px 0' }}>
+            <summary
+              style={{ fontSize: '12px', color: '#555', cursor: 'pointer', padding: '8px 0' }}
+            >
               View NexarTree JSON
             </summary>
-            <pre style={{
-              background: '#0d0d1a',
-              border: '1px solid #1a1a2e',
-              borderRadius: '8px',
-              padding: '16px',
-              fontSize: '11px',
-              color: '#888',
-              overflow: 'auto',
-              maxHeight: '400px',
-            }}>
+            <pre
+              style={{
+                background: '#0d0d1a',
+                border: '1px solid #1a1a2e',
+                borderRadius: '8px',
+                padding: '16px',
+                fontSize: '11px',
+                color: '#888',
+                overflow: 'auto',
+                maxHeight: '400px',
+              }}
+            >
               {JSON.stringify(tree, null, 2)}
             </pre>
           </details>

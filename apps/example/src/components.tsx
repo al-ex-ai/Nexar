@@ -1,5 +1,5 @@
+import type { ComponentMap, NexarComponentProps } from '@nexar/react';
 import type { ReactNode } from 'react';
-import type { NexarComponentProps, ComponentMap } from '@nexar/react';
 
 const styles = {
   stack: {
@@ -16,7 +16,13 @@ const styles = {
     heading: { fontSize: '24px', fontWeight: 700, color: '#fff' },
     subheading: { fontSize: '18px', fontWeight: 600, color: '#ccc' },
     body: { fontSize: '14px', color: '#aaa', lineHeight: '1.6' },
-    label: { fontSize: '12px', fontWeight: 600, color: '#888', textTransform: 'uppercase' as const, letterSpacing: '1px' },
+    label: {
+      fontSize: '12px',
+      fontWeight: 600,
+      color: '#888',
+      textTransform: 'uppercase' as const,
+      letterSpacing: '1px',
+    },
     error: { fontSize: '12px', color: '#ff6b6b', marginTop: '4px' },
     success: { fontSize: '14px', color: '#4ade80', lineHeight: '1.6' },
   },
@@ -96,19 +102,21 @@ const styles = {
 } as const;
 
 function StackComponent({ nodeProps, children }: NexarComponentProps): ReactNode {
-  const direction = nodeProps['direction'] === 'horizontal' ? 'row' : 'column';
-  const align = nodeProps['align'] as string | undefined;
-  const justify = nodeProps['justify'] as string | undefined;
-  const wrap = nodeProps['wrap'] ? 'wrap' as const : undefined;
+  const direction = nodeProps.direction === 'horizontal' ? 'row' : 'column';
+  const align = nodeProps.align as string | undefined;
+  const justify = nodeProps.justify as string | undefined;
+  const wrap = nodeProps.wrap ? ('wrap' as const) : undefined;
   return (
-    <div style={{
-      ...styles.stack,
-      flexDirection: direction,
-      flexWrap: wrap,
-      alignItems: align ?? (direction === 'row' ? 'center' : 'stretch'),
-      justifyContent: justify ?? 'flex-start',
-      gap: `${(nodeProps['gap'] as number | undefined) ?? 12}px`,
-    }}>
+    <div
+      style={{
+        ...styles.stack,
+        flexDirection: direction,
+        flexWrap: wrap,
+        alignItems: align ?? (direction === 'row' ? 'center' : 'stretch'),
+        justifyContent: justify ?? 'flex-start',
+        gap: `${(nodeProps.gap as number | undefined) ?? 12}px`,
+      }}
+    >
       {children}
     </div>
   );
@@ -116,44 +124,55 @@ function StackComponent({ nodeProps, children }: NexarComponentProps): ReactNode
 
 function CardComponent({ nodeProps, children }: NexarComponentProps): ReactNode {
   return (
-    <div style={{
-      ...styles.card,
-      ...(nodeProps['elevated'] ? { boxShadow: '0 8px 32px rgba(0,0,0,0.3)' } : {}),
-    }}>
+    <div
+      style={{
+        ...styles.card,
+        ...(nodeProps.elevated ? { boxShadow: '0 8px 32px rgba(0,0,0,0.3)' } : {}),
+      }}
+    >
       {children}
     </div>
   );
 }
 
 function TextComponent({ nodeProps }: NexarComponentProps): ReactNode {
-  const variant = (nodeProps['variant'] as keyof typeof styles.text) ?? 'body';
-  const content = nodeProps['content'] as string;
+  const variant = (nodeProps.variant as keyof typeof styles.text) ?? 'body';
+  const content = nodeProps.content as string;
   if (!content) return null;
   const style = styles.text[variant] ?? styles.text.body;
   const Tag = variant === 'heading' ? 'h1' : variant === 'subheading' ? 'h2' : 'p';
   return <Tag style={style}>{content}</Tag>;
 }
 
-function InputComponent({ nodeProps, onStateChange, bindKey }: NexarComponentProps): ReactNode {
-  const error = nodeProps['error'] as string | undefined;
+function InputComponent({
+  nodeProps,
+  nodeId,
+  onStateChange,
+  bindKey,
+}: NexarComponentProps): ReactNode {
+  const error = nodeProps.error as string | undefined;
   const hasError = error && error !== '';
   return (
     <div>
-      {nodeProps['label'] && (
-        <label style={{ ...styles.text.label, display: 'block', marginBottom: '6px' }}>
-          {nodeProps['label'] as string}
+      {nodeProps.label && (
+        <label
+          htmlFor={nodeId}
+          style={{ ...styles.text.label, display: 'block', marginBottom: '6px' }}
+        >
+          {nodeProps.label as string}
         </label>
       )}
       <input
-        type={(nodeProps['inputType'] as string) ?? 'text'}
-        placeholder={(nodeProps['placeholder'] as string) ?? ''}
-        value={(nodeProps['value'] as string) ?? ''}
+        id={nodeId}
+        type={(nodeProps.inputType as string) ?? 'text'}
+        placeholder={(nodeProps.placeholder as string) ?? ''}
+        value={(nodeProps.value as string) ?? ''}
         onChange={(e) => {
           if (bindKey && onStateChange) {
             onStateChange(bindKey, e.target.value);
           }
         }}
-        disabled={nodeProps['disabled'] === true}
+        disabled={nodeProps.disabled === true}
         style={{
           ...styles.input,
           ...(hasError ? styles.inputError : {}),
@@ -165,10 +184,10 @@ function InputComponent({ nodeProps, onStateChange, bindKey }: NexarComponentPro
 }
 
 function ButtonComponent({ nodeProps, onAction }: NexarComponentProps): ReactNode {
-  const variant = (nodeProps['variant'] as 'primary' | 'secondary') ?? 'primary';
-  const disabled = nodeProps['disabled'] === true || nodeProps['loading'] === true;
-  const loading = nodeProps['loading'] === true;
-  const action = nodeProps['action'] as string | undefined;
+  const variant = (nodeProps.variant as 'primary' | 'secondary') ?? 'primary';
+  const disabled = nodeProps.disabled === true || nodeProps.loading === true;
+  const loading = nodeProps.loading === true;
+  const action = nodeProps.action as string | undefined;
 
   return (
     <button
@@ -182,13 +201,13 @@ function ButtonComponent({ nodeProps, onAction }: NexarComponentProps): ReactNod
       }}
     >
       {loading && <span style={styles.spinner} />}
-      {nodeProps['label'] as string}
+      {nodeProps.label as string}
     </button>
   );
 }
 
 function BadgeComponent({ nodeProps }: NexarComponentProps): ReactNode {
-  return <span style={styles.badge}>{nodeProps['content'] as string}</span>;
+  return <span style={styles.badge}>{nodeProps.content as string}</span>;
 }
 
 function DividerComponent(): ReactNode {
@@ -198,25 +217,34 @@ function DividerComponent(): ReactNode {
 function ImageComponent({ nodeProps }: NexarComponentProps): ReactNode {
   return (
     <img
-      src={nodeProps['src'] as string}
-      alt={(nodeProps['alt'] as string) ?? ''}
+      src={nodeProps.src as string}
+      alt={(nodeProps.alt as string) ?? ''}
       style={{
         ...styles.image,
-        height: `${(nodeProps['height'] as number | undefined) ?? 200}px`,
+        height: `${(nodeProps.height as number | undefined) ?? 200}px`,
       }}
     />
   );
 }
 
 function AlertComponent({ nodeProps }: NexarComponentProps): ReactNode {
-  const variant = (nodeProps['variant'] as 'error' | 'success') ?? 'error';
-  const content = nodeProps['content'] as string;
+  const variant = (nodeProps.variant as 'error' | 'success') ?? 'error';
+  const content = nodeProps.content as string;
   if (!content) return null;
   const bg = variant === 'error' ? '#2a0a0a' : '#0a2a0a';
   const border = variant === 'error' ? '#5a1a1a' : '#1a5a1a';
   const color = variant === 'error' ? '#ff6b6b' : '#4ade80';
   return (
-    <div style={{ padding: '12px 16px', background: bg, border: `1px solid ${border}`, borderRadius: '8px', color, fontSize: '14px' }}>
+    <div
+      style={{
+        padding: '12px 16px',
+        background: bg,
+        border: `1px solid ${border}`,
+        borderRadius: '8px',
+        color,
+        fontSize: '14px',
+      }}
+    >
       {content}
     </div>
   );

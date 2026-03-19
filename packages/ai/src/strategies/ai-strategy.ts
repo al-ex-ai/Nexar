@@ -1,9 +1,5 @@
-import type {
-  ComponentRegistry,
-  NexarComponent,
-  NexarTree,
-} from '@nexar/core';
-import type { CompositionStrategy, CompositionParams } from '@nexar/engine';
+import type { ComponentRegistry, NexarComponent, NexarTree } from '@nexar/core';
+import type { CompositionParams, CompositionStrategy } from '@nexar/engine';
 import type { ModelAdapter } from '../model-adapter.js';
 import type { RAGEngine } from '../rag.js';
 
@@ -41,13 +37,11 @@ export class AIStrategy implements CompositionStrategy {
     let ragContext = '';
 
     if (this.rag) {
-      const results = await this.rag.retrieve(
-        `${intent.label}: ${intent.description}`,
-      );
+      const results = await this.rag.retrieve(`${intent.label}: ${intent.description}`);
       if (results.length > 0) {
-        ragContext = '\n\nRelevant knowledge:\n' + results
-          .map((r) => `[${r.chunk.title}]: ${r.chunk.content}`)
-          .join('\n---\n');
+        ragContext =
+          '\n\nRelevant knowledge:\n' +
+          results.map((r) => `[${r.chunk.title}]: ${r.chunk.content}`).join('\n---\n');
       }
     }
 
@@ -72,9 +66,7 @@ function buildComponentCatalog(registry: ComponentRegistry): string {
     return 'No components registered.';
   }
 
-  return components
-    .map((c) => formatComponent(c))
-    .join('\n');
+  return components.map((c) => formatComponent(c)).join('\n');
 }
 
 function formatComponent(c: NexarComponent): string {
@@ -111,8 +103,16 @@ Output format:
 }
 
 function buildUserPrompt(
-  intent: { readonly id: string; readonly label: string; readonly description: string; readonly requires: readonly string[] },
-  context: { readonly platform: { readonly type: string }; readonly user?: { readonly id: string; readonly role?: string | undefined } | undefined },
+  intent: {
+    readonly id: string;
+    readonly label: string;
+    readonly description: string;
+    readonly requires: readonly string[];
+  },
+  context: {
+    readonly platform: { readonly type: string };
+    readonly user?: { readonly id: string; readonly role?: string | undefined } | undefined;
+  },
   ragContext: string,
 ): string {
   let prompt = `Compose UI for intent: "${intent.label}"

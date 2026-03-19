@@ -109,7 +109,8 @@ export function createRAG(config: RAGConfig): RAGEngine {
         .join('\n---\n');
 
       const prompt = `Context:\n${context}\n\nQuestion: ${query}`;
-      const defaultSystem = 'Answer the question using only the provided context. Be concise and cite sources.';
+      const defaultSystem =
+        'Answer the question using only the provided context. Be concise and cite sources.';
 
       const result = await config.model.generate(prompt, {
         systemPrompt: systemPrompt ?? defaultSystem,
@@ -129,10 +130,7 @@ export function createRAG(config: RAGConfig): RAGEngine {
   };
 }
 
-function cosineSimilarity(
-  a: readonly number[],
-  b: readonly number[],
-): number {
+function cosineSimilarity(a: readonly number[], b: readonly number[]): number {
   let dot = 0;
   let normA = 0;
   let normB = 0;

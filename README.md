@@ -151,7 +151,7 @@ Basic demo with 4 intents (dashboard, login, profile, contact) showing state bin
 cd apps/example && pnpm dev  # http://127.0.0.1:4100
 ```
 
-### Tax Demo (`apps/tax-demo`)
+### Tax Demo (`apps/tax-demo`) — [Live Demo](https://nexar.al-ex.ai)
 
 Dynamic tax workflow engine demonstrating context-driven composition. One intent produces 3-6 step wizards based on user profile. Includes tax computation engine and AI insights.
 

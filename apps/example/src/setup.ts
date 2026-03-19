@@ -3,7 +3,11 @@ import { createEngine, RulesStrategy } from '@nexar/engine';
 
 const webPlatform = { web: { supported: true } } as const;
 
-function c(type: string, category: NexarComponent['category'], description: string): NexarComponent {
+function c(
+  type: string,
+  category: NexarComponent['category'],
+  description: string,
+): NexarComponent {
   return { type, label: type, description, category, propsSchema: {}, platforms: webPlatform };
 }
 
@@ -23,35 +27,74 @@ export function setupEngine() {
         props: { direction: 'vertical', gap: 20 },
         children: [
           { type: 'text', id: 'login-title', props: { content: 'Sign In', variant: 'heading' } },
-          { type: 'text', id: 'login-sub', props: { content: 'Welcome back. Enter your credentials to continue.', variant: 'body' } },
+          {
+            type: 'text',
+            id: 'login-sub',
+            props: {
+              content: 'Welcome back. Enter your credentials to continue.',
+              variant: 'body',
+            },
+          },
           // Success message (conditional)
-          { type: 'alert', id: 'login-success', props: { content: '$login.success', variant: 'success' }, when: '$login.success != null' },
+          {
+            type: 'alert',
+            id: 'login-success',
+            props: { content: '$login.success', variant: 'success' },
+            when: '$login.success != null',
+          },
           // Error message (conditional)
-          { type: 'alert', id: 'login-error', props: { content: '$login.error', variant: 'error' }, when: '$login.error != null' },
+          {
+            type: 'alert',
+            id: 'login-error',
+            props: { content: '$login.error', variant: 'error' },
+            when: '$login.error != null',
+          },
           { type: 'divider', id: 'login-div', props: {} },
           // Email input bound to state
-          { type: 'input', id: 'email', props: {
-            label: 'Email',
-            inputType: 'email',
-            placeholder: 'you@example.com',
-            bind: '$form.email',
-            error: '$errors.email',
-          }},
+          {
+            type: 'input',
+            id: 'email',
+            props: {
+              label: 'Email',
+              inputType: 'email',
+              placeholder: 'you@example.com',
+              bind: '$form.email',
+              error: '$errors.email',
+            },
+          },
           // Password input bound to state
-          { type: 'input', id: 'password', props: {
-            label: 'Password',
-            inputType: 'password',
-            placeholder: 'Enter password',
-            bind: '$form.password',
-            error: '$errors.password',
-          }},
+          {
+            type: 'input',
+            id: 'password',
+            props: {
+              label: 'Password',
+              inputType: 'password',
+              placeholder: 'Enter password',
+              bind: '$form.password',
+              error: '$errors.password',
+            },
+          },
           {
             type: 'stack',
             id: 'login-actions',
             props: { direction: 'horizontal', justify: 'flex-end', gap: 12 },
             children: [
-              { type: 'button', id: 'cancel', props: { label: 'Cancel', variant: 'secondary', action: 'cancel' } },
-              { type: 'button', id: 'submit', props: { label: 'Sign In', variant: 'primary', action: 'submit', loading: '$login.loading', disabled: '$login.loading' } },
+              {
+                type: 'button',
+                id: 'cancel',
+                props: { label: 'Cancel', variant: 'secondary', action: 'cancel' },
+              },
+              {
+                type: 'button',
+                id: 'submit',
+                props: {
+                  label: 'Sign In',
+                  variant: 'primary',
+                  action: 'submit',
+                  loading: '$login.loading',
+                  disabled: '$login.loading',
+                },
+              },
             ],
           },
         ],
@@ -84,14 +127,30 @@ export function setupEngine() {
             id: 'profile-header',
             props: { direction: 'horizontal', gap: 16 },
             children: [
-              { type: 'image', id: 'avatar', props: { src: 'https://api.dicebear.com/7.x/initials/svg?seed=AH&backgroundColor=6366f1', alt: 'Avatar', height: 64 } },
+              {
+                type: 'image',
+                id: 'avatar',
+                props: {
+                  src: 'https://api.dicebear.com/7.x/initials/svg?seed=AH&backgroundColor=6366f1',
+                  alt: 'Avatar',
+                  height: 64,
+                },
+              },
               {
                 type: 'stack',
                 id: 'profile-info',
                 props: { direction: 'vertical', gap: 4 },
                 children: [
-                  { type: 'text', id: 'name', props: { content: context.user?.id ?? 'Guest', variant: 'heading' } },
-                  { type: 'text', id: 'role', props: { content: context.user?.role ?? 'User', variant: 'body' } },
+                  {
+                    type: 'text',
+                    id: 'name',
+                    props: { content: context.user?.id ?? 'Guest', variant: 'heading' },
+                  },
+                  {
+                    type: 'text',
+                    id: 'role',
+                    props: { content: context.user?.role ?? 'User', variant: 'body' },
+                  },
                 ],
               },
             ],
@@ -110,14 +169,30 @@ export function setupEngine() {
               { type: 'badge', id: 'b6', props: { content: 'PostgreSQL' } },
             ],
           },
-          { type: 'text', id: 'bio', props: { content: '17+ years of full-stack engineering across healthcare, fintech, and marketing platforms. Building the future of intent-driven UI.', variant: 'body' } },
+          {
+            type: 'text',
+            id: 'bio',
+            props: {
+              content:
+                '17+ years of full-stack engineering across healthcare, fintech, and marketing platforms. Building the future of intent-driven UI.',
+              variant: 'body',
+            },
+          },
           {
             type: 'stack',
             id: 'profile-actions',
             props: { direction: 'horizontal', gap: 12 },
             children: [
-              { type: 'button', id: 'edit', props: { label: 'Edit Profile', variant: 'primary', action: 'edit' } },
-              { type: 'button', id: 'settings', props: { label: 'Settings', variant: 'secondary', action: 'settings' } },
+              {
+                type: 'button',
+                id: 'edit',
+                props: { label: 'Edit Profile', variant: 'primary', action: 'edit' },
+              },
+              {
+                type: 'button',
+                id: 'settings',
+                props: { label: 'Settings', variant: 'secondary', action: 'settings' },
+              },
             ],
           },
         ],
@@ -136,27 +211,84 @@ export function setupEngine() {
         id: 'contact-stack',
         props: { direction: 'vertical', gap: 20 },
         children: [
-          { type: 'text', id: 'contact-title', props: { content: 'Get In Touch', variant: 'heading' } },
-          { type: 'text', id: 'contact-sub', props: { content: 'Have a question or want to collaborate? Send a message.', variant: 'body' } },
-          { type: 'alert', id: 'contact-success', props: { content: '$contact.success', variant: 'success' }, when: '$contact.success != null' },
+          {
+            type: 'text',
+            id: 'contact-title',
+            props: { content: 'Get In Touch', variant: 'heading' },
+          },
+          {
+            type: 'text',
+            id: 'contact-sub',
+            props: {
+              content: 'Have a question or want to collaborate? Send a message.',
+              variant: 'body',
+            },
+          },
+          {
+            type: 'alert',
+            id: 'contact-success',
+            props: { content: '$contact.success', variant: 'success' },
+            when: '$contact.success != null',
+          },
           { type: 'divider', id: 'contact-div', props: {} },
           {
             type: 'stack',
             id: 'contact-row',
             props: { direction: 'horizontal', gap: 16 },
             children: [
-              { type: 'input', id: 'first-name', props: { label: 'First Name', placeholder: 'Alex', bind: '$form.firstName', error: '$errors.firstName' } },
-              { type: 'input', id: 'last-name', props: { label: 'Last Name', placeholder: 'Husniddinov', bind: '$form.lastName', error: '$errors.lastName' } },
+              {
+                type: 'input',
+                id: 'first-name',
+                props: {
+                  label: 'First Name',
+                  placeholder: 'Alex',
+                  bind: '$form.firstName',
+                  error: '$errors.firstName',
+                },
+              },
+              {
+                type: 'input',
+                id: 'last-name',
+                props: {
+                  label: 'Last Name',
+                  placeholder: 'Husniddinov',
+                  bind: '$form.lastName',
+                  error: '$errors.lastName',
+                },
+              },
             ],
           },
-          { type: 'input', id: 'email', props: { label: 'Email', inputType: 'email', placeholder: 'you@example.com', bind: '$form.email', error: '$errors.email' } },
-          { type: 'input', id: 'message', props: { label: 'Message', placeholder: 'Your message...', bind: '$form.message', error: '$errors.message' } },
+          {
+            type: 'input',
+            id: 'email',
+            props: {
+              label: 'Email',
+              inputType: 'email',
+              placeholder: 'you@example.com',
+              bind: '$form.email',
+              error: '$errors.email',
+            },
+          },
+          {
+            type: 'input',
+            id: 'message',
+            props: {
+              label: 'Message',
+              placeholder: 'Your message...',
+              bind: '$form.message',
+              error: '$errors.message',
+            },
+          },
           {
             type: 'stack',
             id: 'contact-actions',
             props: { direction: 'horizontal', justify: 'flex-end' },
             children: [
-              { type: 'button', id: 'send', props: { label: 'Send Message', variant: 'primary', action: 'send' } },
+              {
+                type: 'button',
+                id: 'send',
+                props: { label: 'Send Message', variant: 'primary', action: 'send' },
+              },
             ],
           },
         ],
@@ -181,8 +313,20 @@ export function setupEngine() {
     id: 'dashboard-root',
     props: { direction: 'vertical', gap: 24 },
     children: [
-      { type: 'text', id: 'dash-title', props: { content: `Welcome, ${context.user?.id ?? 'Guest'}`, variant: 'heading' } },
-      { type: 'text', id: 'dash-sub', props: { content: 'This UI is composed from intents, not hardcoded pages. Click any intent in the sidebar.', variant: 'body' } },
+      {
+        type: 'text',
+        id: 'dash-title',
+        props: { content: `Welcome, ${context.user?.id ?? 'Guest'}`, variant: 'heading' },
+      },
+      {
+        type: 'text',
+        id: 'dash-sub',
+        props: {
+          content:
+            'This UI is composed from intents, not hardcoded pages. Click any intent in the sidebar.',
+          variant: 'body',
+        },
+      },
       {
         type: 'stack',
         id: 'stats-row',
@@ -220,7 +364,9 @@ export function setupEngine() {
   engine.registry.register(c('stack', 'layout', 'Flex container for arranging children'));
   engine.registry.register(c('card', 'layout', 'Elevated container with border and padding'));
   engine.registry.register(c('text', 'display', 'Text display with variants'));
-  engine.registry.register(c('input', 'input', 'Text input with label, validation, and state binding'));
+  engine.registry.register(
+    c('input', 'input', 'Text input with label, validation, and state binding'),
+  );
   engine.registry.register(c('button', 'action', 'Clickable button with actions'));
   engine.registry.register(c('badge', 'display', 'Small colored tag'));
   engine.registry.register(c('divider', 'display', 'Horizontal separator'));
@@ -232,13 +378,25 @@ export function setupEngine() {
 
 function statCard(id: string, label: string, value: string) {
   return {
-    type: 'card' as const, id, props: {},
+    type: 'card' as const,
+    id,
+    props: {},
     children: [
       {
-        type: 'stack' as const, id: `${id}-stack`, props: { direction: 'vertical' as const, gap: 4 },
+        type: 'stack' as const,
+        id: `${id}-stack`,
+        props: { direction: 'vertical' as const, gap: 4 },
         children: [
-          { type: 'text' as const, id: `${id}-label`, props: { content: label, variant: 'label' as const } },
-          { type: 'text' as const, id: `${id}-value`, props: { content: value, variant: 'heading' as const } },
+          {
+            type: 'text' as const,
+            id: `${id}-label`,
+            props: { content: label, variant: 'label' as const },
+          },
+          {
+            type: 'text' as const,
+            id: `${id}-value`,
+            props: { content: value, variant: 'heading' as const },
+          },
         ],
       },
     ],
@@ -248,7 +406,22 @@ function statCard(id: string, label: string, value: string) {
 /** Available intents for the demo */
 export const intents = [
   { id: 'dashboard', label: 'Dashboard', description: 'Overview with stats', requires: [] },
-  { id: 'login', label: 'Login Form', description: 'Interactive auth form with validation', requires: ['email', 'password'] },
-  { id: 'user-profile', label: 'User Profile', description: 'Context-aware profile card', requires: [] },
-  { id: 'contact', label: 'Contact Form', description: 'Interactive contact form', requires: ['name', 'email', 'message'] },
+  {
+    id: 'login',
+    label: 'Login Form',
+    description: 'Interactive auth form with validation',
+    requires: ['email', 'password'],
+  },
+  {
+    id: 'user-profile',
+    label: 'User Profile',
+    description: 'Context-aware profile card',
+    requires: [],
+  },
+  {
+    id: 'contact',
+    label: 'Contact Form',
+    description: 'Interactive contact form',
+    requires: ['name', 'email', 'message'],
+  },
 ] as const;

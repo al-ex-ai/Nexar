@@ -1,5 +1,5 @@
-import { createContext, useContext, type ReactNode } from 'react';
 import type { NexarEngine } from '@nexar/engine';
+import { createContext, type ReactNode, useContext } from 'react';
 import type { ComponentMap } from './renderer.js';
 
 interface NexarContextValue {
@@ -22,11 +22,7 @@ export interface NexarProviderProps {
 
 /** Provides the Nexar engine and component map to the tree */
 export function NexarProvider({ engine, components, children }: NexarProviderProps): ReactNode {
-  return (
-    <NexarContext value={{ engine, components }}>
-      {children}
-    </NexarContext>
-  );
+  return <NexarContext value={{ engine, components }}>{children}</NexarContext>;
 }
 
 /** Access the Nexar engine and component map from context */

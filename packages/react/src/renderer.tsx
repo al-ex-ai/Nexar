@@ -1,6 +1,6 @@
-import { type ComponentType, type ReactNode, createElement } from 'react';
 import type { NexarNode, NexarTree, NodeProps, SerializableValue } from '@nexar/core';
 import type { NexarAction } from '@nexar/engine';
+import { type ComponentType, createElement, type ReactNode } from 'react';
 
 /** Map component type strings to React components */
 export type ComponentMap = Readonly<Record<string, ComponentType<NexarComponentProps>>>;
@@ -47,7 +47,14 @@ export interface RendererProps {
 }
 
 /** Renders a NexarTree into React components */
-export function NexarRenderer({ tree, components, state, onAction, onStateChange, fallback }: RendererProps): ReactNode {
+export function NexarRenderer({
+  tree,
+  components,
+  state,
+  onAction,
+  onStateChange,
+  fallback,
+}: RendererProps): ReactNode {
   return renderNode(tree.root, components, state ?? {}, onAction, onStateChange, fallback);
 }
 
@@ -75,12 +82,12 @@ function renderNode(
   const resolvedProps = resolveNodeProps(node.props, state);
 
   // Get bind key if present
-  const bindKey = typeof node.props['bind'] === 'string' ? node.props['bind'] : undefined;
+  const bindKey = typeof node.props.bind === 'string' ? node.props.bind : undefined;
 
   // If bound to state, inject current value
   if (bindKey) {
     const stateKey = bindKey.startsWith('$') ? bindKey.slice(1) : bindKey;
-    resolvedProps['value'] = state[stateKey] ?? '';
+    resolvedProps.value = state[stateKey] ?? '';
   }
 
   // Parse action references from `on` handlers
@@ -139,7 +146,14 @@ function evaluateSimpleCondition(
       const leftRaw = trimmed.slice(0, idx).trim();
       const rightRaw = trimmed.slice(idx + op.length).trim();
       const left = leftRaw.startsWith('$') ? state[leftRaw.slice(1)] : leftRaw;
-      const right = rightRaw === 'null' ? null : rightRaw === 'true' ? true : rightRaw === 'false' ? false : rightRaw;
+      const right =
+        rightRaw === 'null'
+          ? null
+          : rightRaw === 'true'
+            ? true
+            : rightRaw === 'false'
+              ? false
+              : rightRaw;
       return op === '==' ? left === right : left !== right;
     }
   }
