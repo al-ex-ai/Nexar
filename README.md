@@ -4,6 +4,10 @@
 
 Nexar is the AI layer between business intent and rendered UI. Instead of writing screens, you define what the user needs to accomplish. The engine composes the right UI from a validated component registry, adapting to user context, device, and business rules at runtime.
 
+**Live demo:** [nexar.al-ex.ai](https://nexar.al-ex.ai)
+
+![Nexar tax demo composing a filing workflow from one intent and the taxpayer profile](docs/screenshot.png)
+
 ## The Problem
 
 Modern apps manage hundreds or thousands of screen definitions. Each user segment, each platform, each A/B test variant is a separate artifact someone has to create, test, and maintain. Server-Driven UI (SDUI) moved the definitions from client to server, but didn't reduce the number of definitions. The maintenance scales linearly with the number of user types.
@@ -151,7 +155,7 @@ Basic demo with 4 intents (dashboard, login, profile, contact) showing state bin
 cd apps/example && pnpm dev  # http://127.0.0.1:4100
 ```
 
-### Tax Demo (`apps/tax-demo`) — [Live Demo](https://nexar.al-ex.ai)
+### Tax Demo (`apps/tax-demo`): [Live Demo](https://nexar.al-ex.ai)
 
 Dynamic tax workflow engine demonstrating context-driven composition. One intent produces 3-6 step wizards based on user profile. Includes tax computation engine and AI insights.
 
