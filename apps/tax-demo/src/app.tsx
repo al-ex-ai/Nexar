@@ -2,7 +2,14 @@ import type { Intent, IntentContext, NexarNode, NexarTree, SerializableValue } f
 import type { NexarAction } from '@nexar/engine';
 import { NexarRenderer } from '@nexar/react';
 import { createStateStore } from '@nexar/state';
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { classifyFiler, generateInsights, type UserProfile } from './ai-insights.js';
 import { componentMap } from './components.js';
 import { setupEngine } from './setup.js';
@@ -12,6 +19,19 @@ const engine = setupEngine();
 const stateStore = createStateStore();
 
 const PRIMARY = '#355EBE';
+
+function useIsMobile(breakpoint = 768): boolean {
+  const query = `(max-width: ${breakpoint}px)`;
+  return useSyncExternalStore(
+    (cb) => {
+      const mql = window.matchMedia(query);
+      mql.addEventListener('change', cb);
+      return () => mql.removeEventListener('change', cb);
+    },
+    () => window.matchMedia(query).matches,
+    () => false,
+  );
+}
 
 const PROFILES: {
   label: string;
@@ -221,35 +241,108 @@ export function App(): ReactNode {
     stateStore.set(key, value);
   }, []);
 
+  const [showSidebar, setShowSidebar] = useState(false);
+  const isMobile = useIsMobile();
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', background: '#0f1117' }}>
-      {/* Left Sidebar */}
-      <div
-        style={{
-          width: '300px',
-          background: '#0a0c14',
-          borderRight: '1px solid #1e2030',
-          padding: '24px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px',
-          flexShrink: 0,
-          overflowY: 'auto',
-        }}
-      >
-        <div>
-          <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#fff', margin: 0 }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        background: '#0f1117',
+      }}
+    >
+      {/* Mobile Top Bar */}
+      {isMobile && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '12px 16px',
+            background: '#0a0c14',
+            borderBottom: '1px solid #1e2030',
+            position: 'sticky',
+            top: 0,
+            zIndex: 20,
+          }}
+        >
+          <h1 style={{ fontSize: '18px', fontWeight: 700, color: '#fff', margin: 0 }}>
             <span style={{ color: PRIMARY }}>N</span>exar
             <span
-              style={{ fontSize: '12px', color: '#6b7280', marginLeft: '8px', fontWeight: 400 }}
+              style={{ fontSize: '11px', color: '#6b7280', marginLeft: '6px', fontWeight: 400 }}
             >
               Tax Demo
             </span>
           </h1>
-          <p style={{ fontSize: '11px', color: '#4b5563', marginTop: '4px' }}>
-            Intent-Driven Dynamic Workflows
-          </p>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={() => setShowTree(!showTree)}
+              style={{
+                padding: '6px 10px',
+                background: showTree ? `${PRIMARY}22` : 'transparent',
+                border: `1px solid ${showTree ? PRIMARY : '#2a2d3a'}`,
+                borderRadius: '6px',
+                color: showTree ? PRIMARY : '#6b7280',
+                fontSize: '11px',
+                cursor: 'pointer',
+                fontFamily: 'monospace',
+              }}
+            >
+              {'{ }'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowSidebar(!showSidebar)}
+              style={{
+                padding: '6px 10px',
+                background: showSidebar ? `${PRIMARY}22` : 'transparent',
+                border: `1px solid ${showSidebar ? PRIMARY : '#2a2d3a'}`,
+                borderRadius: '6px',
+                color: showSidebar ? PRIMARY : '#6b7280',
+                fontSize: '11px',
+                cursor: 'pointer',
+              }}
+            >
+              {showSidebar ? 'Close' : 'Profiles'}
+            </button>
+          </div>
         </div>
+      )}
+
+      {/* Left Sidebar */}
+      <div
+        style={{
+          width: isMobile ? '100%' : '300px',
+          background: '#0a0c14',
+          borderRight: isMobile ? 'none' : '1px solid #1e2030',
+          borderBottom: isMobile ? '1px solid #1e2030' : 'none',
+          padding: isMobile ? '16px' : '24px',
+          display: isMobile && !showSidebar ? 'none' : 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+          flexShrink: 0,
+          overflowY: 'auto',
+          ...(isMobile ? { maxHeight: '60vh' } : {}),
+        }}
+      >
+        {!isMobile && (
+          <div>
+            <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#fff', margin: 0 }}>
+              <span style={{ color: PRIMARY }}>N</span>exar
+              <span
+                style={{ fontSize: '12px', color: '#6b7280', marginLeft: '8px', fontWeight: 400 }}
+              >
+                Tax Demo
+              </span>
+            </h1>
+            <p style={{ fontSize: '11px', color: '#4b5563', marginTop: '4px' }}>
+              Intent-Driven Dynamic Workflows
+            </p>
+          </div>
+        )}
 
         {/* Profile selector */}
         <div>
@@ -321,11 +414,11 @@ export function App(): ReactNode {
       <div
         style={{
           flex: 1,
-          padding: '48px',
+          padding: isMobile ? '16px' : '48px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '24px',
+          gap: isMobile ? '16px' : '24px',
         }}
       >
         <div style={{ width: '100%', maxWidth: '680px' }}>
@@ -345,7 +438,8 @@ export function App(): ReactNode {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginTop: '24px',
+              marginTop: isMobile ? '16px' : '24px',
+              gap: isMobile ? '8px' : '0',
             }}
           >
             <button
@@ -356,37 +450,39 @@ export function App(): ReactNode {
               }}
               disabled={currentStep === 0}
               style={{
-                padding: '12px 24px',
+                padding: isMobile ? '10px 16px' : '12px 24px',
                 background: currentStep === 0 ? '#1a1d28' : 'transparent',
                 border: `1px solid ${currentStep === 0 ? '#2a2d3a' : '#2a2d3a'}`,
                 borderRadius: '8px',
                 color: currentStep === 0 ? '#4b5563' : '#9ca3af',
-                fontSize: '14px',
+                fontSize: isMobile ? '13px' : '14px',
                 cursor: currentStep === 0 ? 'not-allowed' : 'pointer',
               }}
             >
-              Previous
+              {isMobile ? 'Prev' : 'Previous'}
             </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <span style={{ fontSize: '13px', color: '#6b7280' }}>
-                Step {currentStep + 1} of {totalSteps}
+            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '16px' }}>
+              <span style={{ fontSize: isMobile ? '12px' : '13px', color: '#6b7280' }}>
+                {currentStep + 1}/{totalSteps}
               </span>
-              <button
-                type="button"
-                onClick={() => setShowTree(!showTree)}
-                style={{
-                  padding: '6px 12px',
-                  background: showTree ? `${PRIMARY}22` : 'transparent',
-                  border: `1px solid ${showTree ? PRIMARY : '#2a2d3a'}`,
-                  borderRadius: '6px',
-                  color: showTree ? PRIMARY : '#6b7280',
-                  fontSize: '11px',
-                  cursor: 'pointer',
-                  fontFamily: 'monospace',
-                }}
-              >
-                {'{ }'} Tree
-              </button>
+              {!isMobile && (
+                <button
+                  type="button"
+                  onClick={() => setShowTree(!showTree)}
+                  style={{
+                    padding: '6px 12px',
+                    background: showTree ? `${PRIMARY}22` : 'transparent',
+                    border: `1px solid ${showTree ? PRIMARY : '#2a2d3a'}`,
+                    borderRadius: '6px',
+                    color: showTree ? PRIMARY : '#6b7280',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    fontFamily: 'monospace',
+                  }}
+                >
+                  {'{ }'} Tree
+                </button>
+              )}
             </div>
             <button
               type="button"
@@ -396,12 +492,12 @@ export function App(): ReactNode {
               }}
               disabled={currentStep >= totalSteps - 1}
               style={{
-                padding: '12px 24px',
+                padding: isMobile ? '10px 16px' : '12px 24px',
                 background: currentStep >= totalSteps - 1 ? '#1a1d28' : PRIMARY,
                 border: 'none',
                 borderRadius: '8px',
                 color: currentStep >= totalSteps - 1 ? '#4b5563' : '#fff',
-                fontSize: '14px',
+                fontSize: isMobile ? '13px' : '14px',
                 fontWeight: 600,
                 cursor: currentStep >= totalSteps - 1 ? 'not-allowed' : 'pointer',
               }}
@@ -412,16 +508,18 @@ export function App(): ReactNode {
         </div>
       </div>
 
-      {/* Right Drawer - NexarTree viewer */}
+      {/* Right Drawer / Bottom Panel - NexarTree viewer */}
       {showTree && tree && (
         <div
           style={{
-            width: '380px',
+            width: isMobile ? '100%' : '380px',
             background: '#0a0c14',
-            borderLeft: '1px solid #1e2030',
-            padding: '24px',
+            borderLeft: isMobile ? 'none' : '1px solid #1e2030',
+            borderTop: isMobile ? '1px solid #1e2030' : 'none',
+            padding: isMobile ? '16px' : '24px',
             flexShrink: 0,
             overflowY: 'auto',
+            ...(isMobile ? { maxHeight: '50vh' } : {}),
           }}
         >
           <div
